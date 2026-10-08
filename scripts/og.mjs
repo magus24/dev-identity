@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '..', 'dist')
-const out = path.resolve(here, '..', 'public', 'og.png')
+const out = path.resolve(here, '..', 'public', 'og.jpg')
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -43,7 +43,7 @@ const page = await browser.newPage({
 await page.goto('http://localhost:4174/', { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(1500)
-await page.screenshot({ path: out })
+await page.screenshot({ path: out, type: 'jpeg', quality: 92 })
 
 await browser.close()
 server.close()

@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { LineReveal } from '../components/Primitives'
 import { HeroFallback } from '../components/three/HeroFallback'
 import { PROFILE } from '../data/profile'
@@ -14,9 +14,28 @@ const EASE = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
   const [active, setActive] = useState(true)
+  const [sceneReady, setSceneReady] = useState(false)
   const reduce = useReducedMotion()
   const sectionRef = useOnScreen<HTMLElement>(setActive)
   const hasWebGL = useMemo(() => supportsWebGL(), [])
+
+  useEffect(() => {
+    if (!hasWebGL || reduce) return
+    let id: number
+    const start = () => setSceneReady(true)
+    if (typeof window.requestIdleCallback === 'function') {
+      id = window.requestIdleCallback(start, { timeout: 2000 })
+    } else {
+      id = window.setTimeout(start, 1400) as unknown as number
+    }
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(id)
+      } else {
+        window.clearTimeout(id)
+      }
+    }
+  }, [hasWebGL, reduce])
 
   const roles = useMemo(() => ['SOFTWARE', 'AI', 'SECURITY'], [])
 
@@ -30,7 +49,7 @@ export function Hero() {
   return (
     <section id="top" className="hero" ref={sectionRef} aria-label="Intro">
       <div className="hero-canvas" aria-hidden="true">
-        {hasWebGL ? (
+        {hasWebGL && sceneReady ? (
           <Suspense fallback={<HeroFallback />}>
             <HeroScene active={active} />
           </Suspense>
