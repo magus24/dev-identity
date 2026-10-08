@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { ArrowUpRight, X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import type { Project } from '../data/projects'
 import { AntifakeMock } from './visuals/AntifakeMock'
@@ -40,6 +40,7 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
   }, [project, onClose])
 
   const Visual = project ? PROJECT_VISUALS[project.visual] : null
+  const hasLinks = project && (project.github || project.demo)
 
   return (
     <AnimatePresence>
@@ -56,7 +57,7 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
         >
           <div className="case-bar">
             <span className="mono">
-              PROJECT {project.index} — CASE STUDY
+              Case {project.index} — {project.meta.type}
             </span>
             <button ref={closeRef} type="button" className="case-close" onClick={onClose}>
               Close
@@ -67,7 +68,7 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
           <div className="case-inner">
             <header className="case-head">
               <span className="mono">
-                {project.meta.year} — {project.meta.type} — {project.meta.role}
+                {project.meta.year} / {project.meta.role}
               </span>
               <motion.h3
                 className="case-title"
@@ -78,6 +79,13 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
                 {project.title}
               </motion.h3>
               <p className="case-sub">{project.subtitle}</p>
+              <div className="p-tags" style={{ marginTop: 18 }}>
+                {project.tags.map((tag) => (
+                  <span className="p-tag" key={tag}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </header>
 
             <div className="case-visual">
@@ -88,7 +96,7 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
               {project.case.stats.map((stat) => (
                 <div className="case-stat" key={stat.label}>
                   <div className="case-stat__value">{stat.value}</div>
-                  <div className="case-stat__label">{stat.label}</div>
+                  <div className="case-stat__label mono">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -117,6 +125,34 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
                 <li key={tech}>{tech}</li>
               ))}
             </ul>
+
+            {hasLinks && (
+              <div className="case-links">
+                {project.github && (
+                  <a
+                    className="bracket-link"
+                    href={project.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-cursor="OPEN"
+                  >
+                    Source code
+                  </a>
+                )}
+                {project.demo && (
+                  <a
+                    className="bracket-link"
+                    href={project.demo}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-cursor="OPEN"
+                  >
+                    Live demo
+                    <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden="true" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
       )}

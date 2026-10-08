@@ -23,20 +23,20 @@ export function Navigation() {
 
   const close = useCallback(() => setOpen(false), [])
 
-  const goTo = useCallback(
-    (id: string) => {
-      setOpen(false)
-      const el = document.getElementById(id)
-      if (!el) return
-      window.requestAnimationFrame(() => {
-        el.scrollIntoView({
-          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-          block: 'start',
-        })
+  const goTo = useCallback((id: string) => {
+    const el = document.getElementById(id)
+    if (!el) return
+    window.requestAnimationFrame(() => {
+      el.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'start',
       })
-    },
-    [],
-  )
+    })
+  }, [])
+
+  const goTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  }, [])
 
   useEffect(() => {
     let ticking = false
@@ -79,27 +79,39 @@ export function Navigation() {
     <>
       <header className={cx('header', scrolled && 'is-scrolled', open && 'is-open')}>
         <button
-          ref={triggerRef}
           type="button"
           className="brand"
-          aria-expanded={open}
-          aria-controls="site-menu"
-          onClick={() => (open ? close() : setOpen(true))}
+          aria-label="Back to top"
+          onClick={() => (open ? close() : goTop())}
         >
           D<i>/</i>P
         </button>
 
-        <button
-          type="button"
-          className="header-status"
-          aria-expanded={open}
-          aria-controls="site-menu"
-          onClick={() => (open ? close() : setOpen(true))}
-        >
-          <span className="label-open">{PROFILE.availability[0]}</span>
-          <span className="label-close">Close</span>
-          <span className="dot" aria-hidden="true" />
-        </button>
+        <span className="header-center" aria-hidden="true">
+          Portfolio · A System for Building Ideas
+        </span>
+
+        <div className="header-actions">
+          <a
+            className="header-email line-link"
+            href={`mailto:${PROFILE.email}`}
+            tabIndex={open ? -1 : 0}
+          >
+            {PROFILE.email}
+          </a>
+          <button
+            ref={triggerRef}
+            type="button"
+            className="header-status"
+            aria-expanded={open}
+            aria-controls="site-menu"
+            onClick={() => (open ? close() : setOpen(true))}
+          >
+            <span className="label-open">{PROFILE.availability[0]}</span>
+            <span className="label-close">Close</span>
+            <span className="dot" aria-hidden="true" />
+          </button>
+        </div>
       </header>
 
       <AnimatePresence>
@@ -111,17 +123,24 @@ export function Navigation() {
             role="dialog"
             aria-modal="true"
             aria-label="Site navigation"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
+            initial={{ clipPath: 'inset(0 0 100% 0)' }}
+            animate={{ clipPath: 'inset(0 0 0% 0)' }}
+            exit={{ clipPath: 'inset(0 0 100% 0)' }}
+            transition={{ duration: 0.7, ease: EASE }}
           >
             <div className="menu-top">
               <span className="brand" aria-hidden="true">
                 D<i>/</i>P
               </span>
-              <button type="button" className="header-status" onClick={close}>
-                Close
+              <button
+                type="button"
+                className="header-status"
+                onClick={() => {
+                  close()
+                  goTop()
+                }}
+              >
+                Index
                 <X size={14} strokeWidth={1.5} aria-hidden="true" />
               </button>
             </div>
@@ -132,10 +151,11 @@ export function Navigation() {
                   <motion.li
                     key={item.target}
                     className="menu-item"
+                    data-index={item.index}
                     initial={{ opacity: 0, y: 34 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -18 }}
-                    transition={{ duration: 0.6, delay: 0.08 * i, ease: EASE }}
+                    transition={{ duration: 0.65, delay: 0.09 * i, ease: EASE }}
                   >
                     <a
                       className="menu-link"
@@ -143,13 +163,14 @@ export function Navigation() {
                       onClick={(event) => {
                         event.preventDefault()
                         goTo(item.target)
+                        close()
                       }}
                     >
                       <span className="num">{item.index}</span>
                       {item.label}
                       <ArrowUpRight
                         className="arrow"
-                        size={26}
+                        size={24}
                         strokeWidth={1.4}
                         aria-hidden="true"
                       />
@@ -172,7 +193,9 @@ export function Navigation() {
                   </a>
                 ))}
               </div>
-              <span className="mono">{PROFILE.location} — UTC+5</span>
+              <span className="mono">
+                {PROFILE.location} — {PROFILE.timezone}
+              </span>
             </div>
           </motion.div>
         )}

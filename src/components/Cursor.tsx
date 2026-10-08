@@ -1,15 +1,21 @@
 import { useEffect, useRef } from 'react'
-import { cx } from '../lib/utils'
 
-const HOVER_SELECTOR = 'a, button, [role="button"], input, textarea, select, [data-cursor="hover"]'
-
+/**
+ * Context-aware cursor. Rings are driven with a manual lerp loop so
+ * the whole system stays out of React's render path.
+ * Elements opt in with [data-cursor="VIEW|OPEN|DRAG|GO"] to show a label.
+ */
 export function Cursor() {
-  const rootRef = useRef<HTMLDivElement>(null)
   const dotRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLDivElement>(null)
+  const labelRef = useRef<HTMLSpanElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!window.matchMedia('(pointer: fine)').matches) return
+    if (typeof window === 'undefined') return
+    const fine = window.matchMedia('(pointer: fine)').matches
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!fine) return
 
     const root = rootRef.current
     const dot = dotRef.current
@@ -18,71 +24,98 @@ export function Cursor() {
 
     document.documentElement.classList.add('has-cursor')
 
-    let targetX = window.innerWidth / 2
-    let targetY = window.innerHeight / 2
-    let dotX = targetX
-    let dotY = targetY
-    let ringX = targetX
-    let ringY = targetY
+    const pos = { x: -100, y: -100 }
+    const ringPos = { x: -100, y: -100 }
+    let visible = false
+    let hovering = false
+    let down = false
     let raf = 0
 
-    const tick = () => {
-      dotX += (targetX - dotX) * 0.45
-      dotY += (targetY - dotY) * 0.45
-      ringX += (targetX - ringX) * 0.17
-      ringY += (targetY - ringY) * 0.17
-      dot.style.transform = `translate3d(${dotX.toFixed(2)}px, ${dotY.toFixed(2)}px, 0)`
-      ring.style.transform = `translate3d(${ringX.toFixed(2)}px, ${ringY.toFixed(2)}px, 0)`
-      raf = requestAnimationFrame(tick)
+    const apply = () => {
+      ringPos.x += (pos.x - ringPos.x) * 0.22
+      ringPos.y += (pos.y - ringPos.y) * 0.22
+      dot.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`
+      ring.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0)`
+      raf = requestAnimationFrame(apply)
     }
-    raf = requestAnimationFrame(tick)
 
     const onMove = (event: PointerEvent) => {
-      targetX = event.clientX
-      targetY = event.clientY
-      root.classList.add('is-active')
-    }
+      pos.x = event.clientX
+      pos.y = event.clientY
+      if (!visible) {
+        visible = true
+        root.classList.add('is-active')
+        ringPos.x = pos.x
+        ringPos.y = pos.y
+      }
 
-    const onOver = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
-      if (target?.closest?.(HOVER_SELECTOR)) root.classList.add('is-hover')
+      const labelled = target?.closest<HTMLElement>('[data-cursor]')
+      const interactive = target?.closest<HTMLElement>(
+        'a, button, [role="button"], input, summary',
+      )
+
+      if (labelled) {
+        root.classList.add('is-label')
+        root.classList.remove('is-hover')
+        hovering = false
+        if (labelRef.current) labelRef.current.textContent = labelled.dataset.cursor ?? ''
+      } else {
+        root.classList.remove('is-label')
+        if (interactive) {
+          root.classList.add('is-hover')
+          hovering = true
+        } else if (hovering) {
+          root.classList.remove('is-hover')
+          hovering = false
+        }
+      }
     }
 
-    const onOut = (event: MouseEvent) => {
-      const to = event.relatedTarget as HTMLElement | null
-      if (!to || !to.closest?.(HOVER_SELECTOR)) root.classList.remove('is-hover')
+    const onLeave = () => {
+      visible = false
+      root.classList.remove('is-active')
+      root.classList.remove('is-label', 'is-hover')
     }
 
-    const onDown = () => root.classList.add('is-down')
-    const onUp = () => root.classList.remove('is-down')
+    const onDown = () => {
+      down = true
+      root.classList.add('is-down')
+    }
 
-    const onLeaveDoc = (event: MouseEvent) => {
-      if (!event.relatedTarget) root.classList.remove('is-active')
+    const onUp = () => {
+      if (!down) return
+      down = false
+      root.classList.remove('is-down')
     }
 
     window.addEventListener('pointermove', onMove, { passive: true })
-    document.addEventListener('mouseover', onOver)
-    document.addEventListener('mouseout', onOut)
-    window.addEventListener('pointerdown', onDown)
-    window.addEventListener('pointerup', onUp)
-    document.addEventListener('mouseleave', onLeaveDoc)
+    document.documentElement.addEventListener('pointerleave', onLeave)
+    window.addEventListener('pointerdown', onDown, { passive: true })
+    window.addEventListener('pointerup', onUp, { passive: true })
+
+    if (reduce) {
+      dotRef.current?.style.setProperty('transition', 'none')
+    } else {
+      raf = requestAnimationFrame(apply)
+    }
 
     return () => {
       cancelAnimationFrame(raf)
+      document.documentElement.classList.remove('has-cursor')
       window.removeEventListener('pointermove', onMove)
-      document.removeEventListener('mouseover', onOver)
-      document.removeEventListener('mouseout', onOut)
+      document.documentElement.removeEventListener('pointerleave', onLeave)
       window.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointerup', onUp)
-      document.removeEventListener('mouseleave', onLeaveDoc)
-      document.documentElement.classList.remove('has-cursor')
     }
   }, [])
 
   return (
-    <div ref={rootRef} className={cx('cursor')} aria-hidden="true">
-      <div ref={ringRef} className="cursor-ring" />
+    <div ref={rootRef} className="cursor" aria-hidden="true">
       <div ref={dotRef} className="cursor-dot" />
+      <div ref={ringRef} className="cursor-ring">
+        <span ref={labelRef} className="cursor-label" />
+      </div>
     </div>
   )
 }

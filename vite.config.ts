@@ -2,12 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: './',
+  base: '/portfolio/',
   plugins: [react()],
   build: {
     target: 'es2020',
     assetsInlineLimit: 2048,
-    chunkSizeWarningLimit: 1100,
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         manualChunks(id: string) {

@@ -1,105 +1,120 @@
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
-import { useState } from 'react'
-import { LineReveal, SectionLabel } from '../components/Primitives'
-import { ProjectOverlay, PROJECT_VISUALS } from '../components/ProjectOverlay'
-import { PROJECTS, type Project } from '../data/projects'
-import { PROFILE } from '../data/profile'
+import { useRef } from 'react'
+import type { Project } from '../data/projects'
+import { PROJECTS } from '../data/projects'
+import { cx } from '../lib/utils'
+import { SectionLabel, LineReveal, Reveal } from '../components/Primitives'
+import { AntifakeMock } from '../components/visuals/AntifakeMock'
+import { ShieldxMock } from '../components/visuals/ShieldxMock'
+import { YotoqhonamMock } from '../components/visuals/YotoqhonamMock'
 
-const EASE = [0.22, 1, 0.36, 1] as const
+const VISUALS = {
+  yotoqhonam: YotoqhonamMock,
+  antifake: AntifakeMock,
+  shieldx: ShieldxMock,
+} as const
 
-function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void }) {
-  const Visual = PROJECT_VISUALS[project.visual]
+interface ProjectRowProps {
+  project: Project
+  reversed: boolean
+  onOpen: (project: Project) => void
+}
+
+function ProjectRow({ project, reversed, onOpen }: ProjectRowProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const Visual = VISUALS[project.visual]
+
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const figureY = useTransform(scrollYProgress, [0, 1], [46, -46])
+  const figureScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.96, 1, 0.96])
 
   return (
-    <motion.article
-      className="project"
-      initial={{ opacity: 0, y: 44 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-12% 0px' }}
-      transition={{ duration: 0.9, ease: EASE }}
-    >
-      <div className="project-body">
-        <span className="project-num" aria-hidden="true">
-          {project.index}
-        </span>
+    <article ref={ref} className={cx('project-row', reversed && 'project-row--rev')}>
+      <span className="project-index" aria-hidden="true">
+        {project.index}
+      </span>
 
-        <h3 className="project-title">{project.title}</h3>
-        <p className="project-sub">{project.subtitle}</p>
-
-        <ul className="project-tags">
-          {project.tags.map((tag) => (
-            <li key={tag}>{tag}</li>
-          ))}
-        </ul>
-
-        <p className="project-desc">{project.description}</p>
-
-        <div className="project-meta">
-          <div>
-            <span className="k">Year</span>
-            <span className="v">{project.meta.year}</span>
-          </div>
-          <div>
-            <span className="k">Role</span>
-            <span className="v">{project.meta.role}</span>
-          </div>
-          <div>
-            <span className="k">Type</span>
-            <span className="v">{project.meta.type}</span>
-          </div>
+      <div className="project-info">
+        <div className="p-meta">
+          <span className="mono">
+            <b>{project.meta.year}</b> — {project.meta.type}
+          </span>
+          <span className="mono">{project.meta.role}</span>
         </div>
 
-        <button type="button" className="project-cta" onClick={onOpen}>
-          View case
-          <ArrowUpRight size={15} strokeWidth={1.5} aria-hidden="true" />
-        </button>
+        <LineReveal text={project.title} className="p-title" />
+
+        <Reveal delay={0.08}>
+          <p className="p-sub">{project.subtitle}</p>
+        </Reveal>
+
+        <div className="p-tags" aria-label="Tags">
+          {project.tags.map((tag) => (
+            <span className="p-tag" key={tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        <Reveal delay={0.14}>
+          <p className="p-desc lede">{project.description}</p>
+        </Reveal>
+
+        <div className="p-actions">
+          <button
+            type="button"
+            className="bracket-link"
+            data-cursor="VIEW"
+            onClick={() => onOpen(project)}
+            aria-label={`Open ${project.title} case study`}
+          >
+            Open case study
+          </button>
+        </div>
       </div>
 
-      <button
-        type="button"
-        className="project-media"
-        onClick={onOpen}
-        aria-label={`Open case study: ${project.title}`}
-      >
-        <span className="project-media__inner">
-          <Visual />
-        </span>
-        <span className="view-case">
-          View case
-          <ArrowUpRight size={13} strokeWidth={1.6} aria-hidden="true" />
-        </span>
-      </button>
-    </motion.article>
+      <motion.div className="p-thumb" style={{ y: figureY, scale: figureScale }}>
+        <Reveal y={30}>
+          <div className="p-thumb-frame">
+            <span className="mono p-thumb-tag">
+              FIG. {project.index} — {project.title}
+            </span>
+            <div style={{ padding: '56px 18px 18px' }}>
+              <Visual />
+            </div>
+          </div>
+        </Reveal>
+      </motion.div>
+    </article>
   )
 }
 
-export function Work() {
-  const [active, setActive] = useState<Project | null>(null)
+interface WorkProps {
+  onOpen: (project: Project) => void
+}
 
+export function Work({ onOpen }: WorkProps) {
   return (
-    <section id="work" className="section work" aria-labelledby="work-title">
-      <div className="work-head">
-        <div>
-          <SectionLabel index="01" title="Work" />
-          <h2 id="work-title" className="h-display">
-            <LineReveal text="SELECTED WORK" />
-          </h2>
-        </div>
-        <p className="count">
-          {String(PROJECTS.length).padStart(2, '0')} CASE STUDIES
-          <br />
-          2024 — {PROFILE.year}
-        </p>
-      </div>
+    <section id="work" className="section" aria-label="Projects">
+      <SectionLabel index="01" title="Work — Systems" />
 
-      <div className="projects">
-        {PROJECTS.map((project) => (
-          <ProjectCard key={project.id} project={project} onOpen={() => setActive(project)} />
-        ))}
-      </div>
+      {PROJECTS.map((project, i) => (
+        <ProjectRow
+          key={project.id}
+          project={project}
+          reversed={i % 2 === 1}
+          onOpen={onOpen}
+        />
+      ))}
 
-      <ProjectOverlay project={active} onClose={() => setActive(null)} />
+      <div className="hair" />
+      <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+        <a className="mono line-link" href="#experiments" style={{ color: 'var(--fg)' }}>
+          Next: Experiments
+          <ArrowUpRight size={12} strokeWidth={1.5} style={{ display: 'inline', verticalAlign: '-1px' }} />
+        </a>
+      </div>
     </section>
   )
 }

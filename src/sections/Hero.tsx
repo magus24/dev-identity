@@ -1,123 +1,79 @@
-import { motion, useReducedMotion } from 'framer-motion'
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { LineReveal } from '../components/Primitives'
-import { HeroFallback } from '../components/three/HeroFallback'
+import { motion } from 'framer-motion'
+import { ArrowDown } from 'lucide-react'
 import { PROFILE } from '../data/profile'
-import { useOnScreen } from '../hooks/usePage'
-import { supportsWebGL } from '../lib/webgl'
-
-const HeroScene = lazy(() =>
-  import('../components/three/HeroScene').then((module) => ({ default: module.HeroScene })),
-)
+import { STATS } from '../data/metrics'
+import { LineReveal, Reveal } from '../components/Primitives'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
-  const [active, setActive] = useState(true)
-  const [sceneReady, setSceneReady] = useState(false)
-  const reduce = useReducedMotion()
-  const sectionRef = useOnScreen<HTMLElement>(setActive)
-  const hasWebGL = useMemo(() => supportsWebGL(), [])
-
-  useEffect(() => {
-    if (!hasWebGL || reduce) return
-    let id: number
-    const start = () => setSceneReady(true)
-    if (typeof window.requestIdleCallback === 'function') {
-      id = window.requestIdleCallback(start, { timeout: 2000 })
-    } else {
-      id = window.setTimeout(start, 1400) as unknown as number
-    }
-    return () => {
-      if (typeof window.cancelIdleCallback === 'function') {
-        window.cancelIdleCallback(id)
-      } else {
-        window.clearTimeout(id)
-      }
-    }
-  }, [hasWebGL, reduce])
-
-  const roles = useMemo(() => ['SOFTWARE', 'AI', 'SECURITY'], [])
-
-  const scrollToWork = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    const el = document.getElementById('work')
-    if (!el) return
-    el.scrollIntoView({ behavior: prefersSafe() ? 'auto' : 'smooth', block: 'start' })
-  }, [])
-
   return (
-    <section id="top" className="hero" ref={sectionRef} aria-label="Intro">
-      <div className="hero-canvas" aria-hidden="true">
-        {hasWebGL && sceneReady ? (
-          <Suspense fallback={<HeroFallback />}>
-            <HeroScene active={active} />
-          </Suspense>
-        ) : (
-          <HeroFallback />
-        )}
-      </div>
-
+    <section id="top" className="hero" aria-label="Introduction">
       <div className="hero-inner">
-        <div className="hero-topline mono">
-          <span>DEV // IDENTITY — PORTFOLIO {PROFILE.year}</span>
-          <span>
-            {PROFILE.location} · <span className="accent">AVAILABLE</span>
-          </span>
-        </div>
+        <Reveal delay={0.05}>
+          <p className="hero-kicker mono">
+            Portfolio — <span>{PROFILE.year}</span> / {PROFILE.location}
+          </p>
+        </Reveal>
 
-        <div className="hero-main">
-          <motion.p
-            className="hero-role mono"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.05 }}
-          >
-            {roles.map((role, i) => (
-              <span key={role} style={{ display: 'inline-flex', gap: 14 }}>
-                {i > 0 && (
-                  <span className="sep" aria-hidden="true">
-                    /
-                  </span>
-                )}
+        <h1 className="hero-name" aria-label={PROFILE.name}>
+          <LineReveal text={PROFILE.name} delay={0.1} />
+        </h1>
+
+        <div className="hero-roles" aria-label="Disciplines">
+          {PROFILE.roles.map((role, i) => (
+            <Reveal key={role} delay={0.25 + i * 0.12}>
+              <a className="hero-role" href="#about">
+                <span className="num">0{i + 1}</span>
                 {role}
-              </span>
-            ))}
-          </motion.p>
-
-          <h1 className="hero-title">
-            <LineReveal text={PROFILE.name} className="hero-name" delay={0.12} />
-            <span className="hero-headline">
-              <LineReveal text={PROFILE.headline[0]} delay={0.3} />
-              <LineReveal text={PROFILE.headline[1]} delay={0.42} />
-            </span>
-          </h1>
+              </a>
+            </Reveal>
+          ))}
         </div>
 
-        <motion.div
-          className="hero-bottom"
-          initial={{ opacity: 0, y: reduce ? 0 : 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.65, ease: EASE }}
-        >
-          <a className="bracket-link" href="#work" onClick={scrollToWork}>
-            Explore work <span aria-hidden="true">↓</span>
-          </a>
-
-          <div className="hero-status">
-            <span className="k">AVAILABLE FOR</span>
-            <span className="v">{PROFILE.availability.join(' · ')}</span>
-          </div>
-        </motion.div>
+        <div className="hero-headline" aria-hidden="true">
+          {PROFILE.headline.map((line, i) => (
+            <LineReveal
+              key={line}
+              text={line}
+              delay={0.6 + i * 0.14}
+              className={i === 1 ? 'line--alt' : ''}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="hero-scroll" aria-hidden="true">
-        Scroll
+      <div className="hero-hint" aria-hidden="true">
+        drag the core
+      </div>
+
+      <div className="hero-strip">
+        {STATS.map((stat, i) => (
+          <motion.div
+            className="hero-stat"
+            key={stat.label}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.9 + i * 0.1, ease: EASE }}
+          >
+            <div className="v">{stat.value}</div>
+            <div className="l mono">{stat.label}</div>
+          </motion.div>
+        ))}
+        <motion.a
+          className="hero-go"
+          href="#work"
+          data-cursor="GO"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 1.2, ease: EASE }}
+        >
+          Explore work
+          <span className="arr" aria-hidden="true">
+            <ArrowDown size={13} strokeWidth={1.5} />
+          </span>
+        </motion.a>
       </div>
     </section>
   )
-}
-
-function prefersSafe() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }

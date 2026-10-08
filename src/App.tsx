@@ -1,43 +1,157 @@
-import { MotionConfig } from 'framer-motion'
+import { lazy, Suspense, useCallback, useEffect, useReducer } from 'react'
+import { MotionConfig, useReducedMotion } from 'framer-motion'
+import { Background } from './components/Background'
 import { Cursor } from './components/Cursor'
-import { Footer } from './components/Footer'
 import { Navigation } from './components/Navigation'
+import { Footer } from './components/Footer'
 import { ScrollProgress } from './components/ScrollProgress'
-import { useDocumentTitle } from './hooks/usePage'
-import { About } from './sections/About'
-import { Contact } from './sections/Contact'
-import { Experiments } from './sections/Experiments'
+import { ProjectOverlay } from './components/ProjectOverlay'
+import { CommandMenu } from './components/CommandMenu'
+import { Guide } from './components/Guide'
+import { CoreFallback } from './components/CoreFallback'
+import { CORE_STATES } from './data/navigation'
+import { PROFILE } from './data/profile'
+import { useCapabilities, useScrollStory } from './hooks/useScrollStory'
+import { prefersReducedMotion } from './hooks/useMediaQuery'
+import type { Project } from './data/projects'
 import { Hero } from './sections/Hero'
-import { Metrics } from './sections/Metrics'
-import { Stack } from './sections/Stack'
-import { Timeline } from './sections/Timeline'
+import { Ideas } from './sections/Ideas'
+import { About } from './sections/About'
 import { Work } from './sections/Work'
+import { Experiments } from './sections/Experiments'
+import { Stack } from './sections/Stack'
+import { Journey } from './sections/Journey'
+import { Contact } from './sections/Contact'
+import { Finale } from './sections/Finale'
+
+const CoreScene = lazy(() =>
+  import('./components/CoreScene').then((m) => ({ default: m.CoreScene })),
+)
+
+interface OverlayState {
+  command: boolean
+  guide: boolean
+  project: Project | null
+}
+
+const OVERLAYS_INITIAL: OverlayState = { command: false, guide: false, project: null }
+
+type OverlayAction =
+  | { type: 'command'; value: boolean }
+  | { type: 'guide'; value: boolean }
+  | { type: 'project'; value: Project | null }
+
+function overlayReducer(state: OverlayState, action: OverlayAction): OverlayState {
+  switch (action.type) {
+    case 'command':
+      return { ...state, command: action.value, guide: false }
+    case 'guide':
+      return { ...state, command: false, guide: action.value }
+    case 'project':
+      return { ...state, project: action.value }
+  }
+}
 
 export default function App() {
-  useDocumentTitle('David — Software Engineer / AI / Cybersecurity')
+  const spec = useCapabilities()
+  const story = useScrollStory()
+  const reducedMotion = Boolean(useReducedMotion())
+  const [overlays, dispatch] = useReducer(overlayReducer, OVERLAYS_INITIAL)
+
+  const openProject = useCallback((project: Project) => {
+    dispatch({ type: 'project', value: project })
+  }, [])
+  const closeProject = useCallback(() => dispatch({ type: 'project', value: null }), [])
+  const setCommand = useCallback(
+    (value: boolean) => dispatch({ type: 'command', value }),
+    [],
+  )
+  const setGuide = useCallback((value: boolean) => dispatch({ type: 'guide', value }), [])
+
+  useEffect(() => {
+    document.title = `${PROFILE.name.toLowerCase()} — portfolio — software, ai & cybersecurity`
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + window.location.hash,
+    )
+  }, [])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const typing =
+        target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+      if (typing) return
+
+      if (event.key === '/') {
+        event.preventDefault()
+        setCommand(!overlays.command)
+      } else if (event.key === '?') {
+        event.preventDefault()
+        setGuide(!overlays.guide)
+      } else if (event.key === 'd' || event.key === 'D') {
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [overlays.command, setCommand, setGuide])
+
+  const coreState = CORE_STATES[story.section] ?? 'seed'
 
   return (
     <MotionConfig reducedMotion="user">
-      <a className="skip-link" href="#main">
-        Skip to content
+      <a className="skip-link" href="#work">
+        Skip to projects
       </a>
 
-      <Cursor />
+      <Background />
       <ScrollProgress />
-      <Navigation />
 
-      <main id="main">
-        <Hero />
-        <About />
-        <Work />
-        <Experiments />
-        <Stack />
-        <Metrics />
-        <Timeline />
-        <Contact />
-      </main>
+      {spec.enabled ? (
+        <Suspense fallback={null}>
+          <CoreScene
+            spec={spec}
+            section={coreState}
+            velocity={story.velocity}
+            reducedMotion={reducedMotion}
+          />
+        </Suspense>
+      ) : (
+        <div className="core-stage" aria-hidden="true">
+          <div className="core-fallback">
+            <CoreFallback />
+          </div>
+        </div>
+      )}
 
-      <Footer />
+      <div className="app">
+        <Navigation />
+
+        <main>
+          <Hero />
+          <Ideas />
+          <About />
+          <Work onOpen={openProject} />
+          <Experiments />
+          <Stack />
+          <Journey />
+          <Contact />
+          <Finale />
+        </main>
+
+        <Footer />
+      </div>
+
+      <span className="keys" aria-hidden="true">
+        <kbd>/</kbd> menu <kbd>?</kbd> guide <kbd>D</kbd> top
+      </span>
+
+      <ProjectOverlay project={overlays.project} onClose={closeProject} />
+      <CommandMenu open={overlays.command} onClose={() => setCommand(false)} />
+      <Guide open={overlays.guide} onClose={() => setGuide(false)} />
+      <Cursor />
     </MotionConfig>
   )
 }

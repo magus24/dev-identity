@@ -1,53 +1,67 @@
 import { ArrowUpRight } from 'lucide-react'
-import { LineReveal, Magnetic, Reveal, SectionLabel } from '../components/Primitives'
 import { PROFILE } from '../data/profile'
+import { SectionLabel, Reveal, LineReveal } from '../components/Primitives'
 
-const LINKS = [
-  { label: 'GitHub', href: PROFILE.github },
-  { label: 'Telegram', href: PROFILE.telegram },
-  { label: 'LinkedIn', href: PROFILE.linkedin },
-  { label: 'Email', href: `mailto:${PROFILE.email}` },
+const CHANNELS = [
+  { label: 'GitHub', value: PROFILE.github, href: PROFILE.github },
+  { label: 'Telegram', value: PROFILE.telegram, href: PROFILE.telegram },
+  { label: 'LinkedIn', value: PROFILE.linkedin, href: PROFILE.linkedin },
+  { label: 'Email', value: PROFILE.email, href: `mailto:${PROFILE.email}` },
 ]
 
 export function Contact() {
   return (
-    <section id="contact" className="section contact" aria-labelledby="contact-title">
-      <div className="contact-glow" aria-hidden="true" />
+    <section id="contact" className="section" aria-label="Contact">
+      <SectionLabel index="06" title="Contact — open channel" />
 
-      <div className="contact-inner">
-        <SectionLabel index="05" title="Contact" />
-
-        <h2 id="contact-title" className="contact-title">
-          <LineReveal text="HAVE AN IDEA?" />
-          <LineReveal text="LET'S BUILD SOMETHING" delay={0.1} />
-          <LineReveal text="WORTH REMEMBERING." delay={0.2} className="muted" />
-        </h2>
-
-        <div className="contact-actions">
-          {LINKS.map((link, index) => (
-            <Reveal key={link.label} delay={0.25 + index * 0.07}>
-              <Magnetic strength={0.34}>
-                <a
-                  className="btn-line"
-                  href={link.href}
-                  target={link.href.startsWith('mailto:') ? undefined : '_blank'}
-                  rel="noreferrer"
-                >
-                  {link.label}
-                  <ArrowUpRight size={14} strokeWidth={1.6} aria-hidden="true" />
-                </a>
-              </Magnetic>
-            </Reveal>
-          ))}
+      <div className="contact-grid">
+        <div>
+          <p className="contact-title" aria-label="Have an idea">
+            <LineReveal text="Have an idea?" />
+            <span className="big">
+              <LineReveal text="Let's build" delay={0.1} />
+              <LineReveal text="something worth" delay={0.2} />
+              <LineReveal text="remembering." delay={0.3} />
+            </span>
+          </p>
+          <Reveal delay={0.2}>
+            <p className="contact-lead">
+              A system, a product, an experiment — if it should exist, I want to build it.
+              Pick a channel, any channel.
+            </p>
+          </Reveal>
         </div>
 
-        <Reveal delay={0.4}>
-          <div className="contact-meta">
-            <span className="mono">Based in {PROFILE.location}</span>
-            <span className="mono">Open for {PROFILE.availability.join(' · ')}</span>
-            <span className="mono accent">Response within 24h</span>
+        <div>
+          <div className="mono" style={{ marginBottom: 10 }}>
+            Channels
           </div>
-        </Reveal>
+          {CHANNELS.map((channel, i) => (
+            <Reveal key={channel.label} delay={0.08 * i} y={18}>
+              <a
+                className="contact-channel"
+                href={channel.href}
+                target={channel.href.startsWith('mailto:') ? undefined : '_blank'}
+                rel="noreferrer"
+                data-cursor="OPEN"
+              >
+                <span className="mono">0{i + 1}</span>
+                {channel.label}
+                <ArrowUpRight
+                  size={16}
+                  strokeWidth={1.5}
+                  style={{ color: 'var(--accent)', marginLeft: 'auto' }}
+                  aria-hidden="true"
+                />
+              </a>
+            </Reveal>
+          ))}
+
+          <div className="contact-status">
+            <span className="dot" aria-hidden="true" />
+            {PROFILE.availability[0]} — {PROFILE.location} / {PROFILE.timezone}
+          </div>
+        </div>
       </div>
     </section>
   )

@@ -1,9 +1,11 @@
 export interface Profile {
   name: string
   mark: string
-  role: string
+  roles: readonly string[]
   headline: readonly [string, string]
+  manifesto: string
   location: string
+  timezone: string
   disciplines: readonly string[]
   availability: readonly string[]
   email: string
@@ -17,12 +19,15 @@ export interface Profile {
  * Placeholder contact data — replace with your own before publishing.
  */
 export const PROFILE: Profile = {
-  name: 'David',
+  name: 'DAVID',
   mark: 'D/P',
-  role: 'Software Engineer',
+  roles: ['SOFTWARE', 'AI', 'CYBERSECURITY'],
   headline: ['I BUILD THINGS', 'THAT SHOULD EXIST.'],
+  manifesto:
+    'A portfolio is not a list of works — it is a system: ideas in, products out. This page is an engine. Everything you see is a function of data, geometry and intent.',
   location: 'Uzbekistan',
-  disciplines: ['Software Engineering', 'AI / Cybersecurity', 'Web'],
+  timezone: 'UTC+5',
+  disciplines: ['Software Engineering', 'AI', 'Cybersecurity'],
   availability: ['Projects', 'Research', 'Collaboration'],
   email: 'you@example.com',
   github: 'https://github.com/your-username',

@@ -1,32 +1,26 @@
 import { PROFILE } from '../data/profile'
-
-const LINKS = [
-  { label: 'GitHub', href: PROFILE.github },
-  { label: 'Telegram', href: PROFILE.telegram },
-  { label: 'LinkedIn', href: PROFILE.linkedin },
-  { label: 'Email', href: `mailto:${PROFILE.email}` },
-]
+import { prefersReducedMotion } from '../hooks/useMediaQuery'
 
 export function Footer() {
+  const goTop = () =>
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+
   return (
     <footer className="footer">
-      <p className="footer-note">
-        <b>{PROFILE.name}</b> / {PROFILE.year} — Designed &amp; built from scratch.
-      </p>
-
-      <nav className="footer-links" aria-label="Social links">
-        {LINKS.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            target={link.href.startsWith('mailto:') ? undefined : '_blank'}
-            rel="noreferrer"
-          >
-            {link.label}
-          </a>
-        ))}
-        <a href="#top">Back to top ↑</a>
-      </nav>
+      <span className="footer-note">
+        © {PROFILE.year} <b>D/P</b> — a system for building ideas
+      </span>
+      <div className="footer-links">
+        <a href={PROFILE.github} target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+        <a href={PROFILE.telegram} target="_blank" rel="noreferrer">
+          Telegram
+        </a>
+        <button type="button" className="line-link" onClick={goTop} aria-label="Back to top">
+          ↑ Top
+        </button>
+      </div>
     </footer>
   )
 }

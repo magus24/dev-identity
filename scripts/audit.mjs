@@ -19,6 +19,7 @@ const TYPES = {
 const server = http.createServer(async (req, res) => {
   try {
     let pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+    if (pathname.startsWith('/portfolio/')) pathname = pathname.slice('/portfolio'.length)
     if (pathname === '/') pathname = '/index.html'
     const data = await readFile(path.join(root, pathname))
     res.writeHead(200, { 'content-type': TYPES[path.extname(path.join(root, pathname))] || 'application/octet-stream' })
@@ -60,15 +61,16 @@ for (const [name, viewport] of Object.entries({
     }
 
     out.heroName = cs('.hero-name', ['fontFamily', 'fontSize', 'lineHeight', 'color'])
-    out.headline = cs('.hero-headline', ['fontFamily', 'fontSize', 'color'])
+    out.headline = cs('.hero-headline .line-mask', ['fontFamily', 'fontSize', 'color'])
     out.body = cs('body', ['fontFamily', 'backgroundColor', 'color'])
     out.sectionLabel = cs('.section-label', ['fontFamily', 'fontSize', 'color'])
-    out.projectTitle = cs('.project-title', ['fontSize', 'fontFamily'])
-    out.metricValue = cs('.metric__value', ['fontSize'])
+    out.projectTitle = cs('.project-row .p-title', ['fontSize', 'fontFamily'])
+    out.heroStat = cs('.hero-stat .v', ['fontSize'])
     out.contactTitle = cs('.contact-title', ['fontSize', 'fontFamily'])
     out.canvas = cs('canvas', ['width'])
     out.heroRect = (() => {
       const el = document.querySelector('.hero')
+      if (!el) return 'MISSING'
       const r = el.getBoundingClientRect()
       return [Math.round(r.width), Math.round(r.height)]
     })()

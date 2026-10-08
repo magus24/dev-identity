@@ -24,6 +24,7 @@ const TYPES = {
 const server = http.createServer(async (req, res) => {
   try {
     let pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+    if (pathname.startsWith('/portfolio/')) pathname = pathname.slice('/portfolio'.length)
     if (pathname === '/') pathname = '/index.html'
     const file = path.join(root, pathname)
     const data = await readFile(file)
@@ -42,6 +43,7 @@ const report = { console: [], pageErrors: [], failedRequests: [], badResponses: 
 async function attach(page) {
   page.on('console', (msg) => {
     if (['error', 'warning'].includes(msg.type())) {
+      if (msg.text().includes('THREE.Clock')) return
       report.console.push(`[${msg.type()}] ${msg.text()}`)
     }
   })
@@ -53,6 +55,11 @@ async function attach(page) {
     if (res.status() >= 400) report.badResponses.push(`${res.status()} ${res.url()}`)
   })
 }
+
+const overflow = (page) =>
+  page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
 
 const CHROME =
   process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
@@ -66,83 +73,90 @@ const desktop = await browser.newContext({
 const page = await desktop.newPage()
 attach(page)
 await page.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
-await page.waitForTimeout(2600)
+await page.waitForTimeout(3000)
 
 report.webgl = await page.evaluate(() => {
-  const canvas = document.querySelector('canvas')
+  const canvas = document.querySelector('.core-stage canvas')
   if (!canvas) return 'no canvas'
   const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
   return gl ? `ok (${canvas.width}x${canvas.height})` : 'no context'
 })
-
-report.overflowDesktop = await page.evaluate(
-  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-)
-
+report.heroName = await page.textContent('.hero-name')
+report.overflowDesktop = await overflow(page)
 report.fonts = await page.evaluate(() => document.fonts.check('16px "Space Grotesk Variable"'))
+report.coreCanvasCount = await page.locator('.core-stage canvas').count()
 
 await page.screenshot({ path: path.join(shots, '01-hero.png') })
 
-/* menu */
-await page.click('.brand')
-await page.waitForTimeout(700)
-await page.screenshot({ path: path.join(shots, '02-menu.png') })
-report.menuLinks = await page.locator('.menu-link').count()
+/* command palette via / */
+await page.keyboard.press('/')
+await page.waitForTimeout(600)
+report.commandVisible = await page.locator('.cmd-panel').isVisible()
+await page.screenshot({ path: path.join(shots, '02-command.png') })
 await page.keyboard.press('Escape')
-await page.waitForTimeout(500)
+await page.waitForTimeout(400)
 
-/* scroll to work */
-await page.evaluate(() => document.getElementById('work')?.scrollIntoView())
-await page.waitForTimeout(1400)
-await page.screenshot({ path: path.join(shots, '03-work.png') })
+/* guide via ? */
+await page.keyboard.press('?')
+await page.waitForTimeout(600)
+report.guideVisible = await page.locator('.guide-panel').isVisible()
+await page.screenshot({ path: path.join(shots, '03-guide.png') })
+await page.keyboard.press('Escape')
+await page.waitForTimeout(400)
 
-/* hover first project */
-await page.hover('.project:first-child .project-media')
-await page.waitForTimeout(800)
-await page.screenshot({ path: path.join(shots, '04-project-hover.png') })
-
-/* open case study */
-await page.click('.project:first-child .project-media')
-await page.waitForTimeout(1000)
-await page.screenshot({ path: path.join(shots, '05-case.png') })
+/* fullscreen menu */
+await page.click('.header-status')
+await page.waitForTimeout(900)
+report.menuLinks = await page.locator('.menu-link').count()
+await page.screenshot({ path: path.join(shots, '04-menu.png') })
 await page.keyboard.press('Escape')
 await page.waitForTimeout(600)
 
+/* work */
+await page.evaluate(() => document.getElementById('work')?.scrollIntoView())
+await page.waitForTimeout(1600)
+await page.screenshot({ path: path.join(shots, '05-work.png') })
+
+/* open case study */
+await page.click('.project-row .bracket-link >> nth=0')
+await page.waitForTimeout(1400)
+report.caseVisible = await page.locator('.case-overlay').isVisible()
+await page.screenshot({ path: path.join(shots, '06-case.png') })
+await page.keyboard.press('Escape')
+await page.waitForTimeout(700)
+
 /* experiments */
 await page.evaluate(() => document.getElementById('experiments')?.scrollIntoView())
-await page.waitForTimeout(1200)
-await page.hover('.exp-item:nth-child(4) .exp-btn')
-await page.waitForTimeout(700)
-await page.screenshot({ path: path.join(shots, '06-experiments.png') })
+await page.waitForTimeout(1300)
+await page.hover('.exp-row >> nth=3')
+await page.waitForTimeout(800)
+report.expStageText = await page.textContent('.exp-stage .stage-desc')
+await page.screenshot({ path: path.join(shots, '07-experiments.png') })
 
 /* stack */
 await page.evaluate(() => document.getElementById('stack')?.scrollIntoView())
-await page.waitForTimeout(1200)
-await page.screenshot({ path: path.join(shots, '07-stack.png') })
-/* stack — orbit keeps rotating, so drive the interaction via focus() */
-await page.evaluate(() => {
-  const buttons = [...document.querySelectorAll('.orbit-node__label')]
-  buttons[2]?.focus()
-})
-await page.waitForTimeout(700)
-report.stackFocusText = await page.textContent('.orbit-core__info')
-report.stackFocusHint = await page.textContent('.orbit-hint')
-report.stackPaused = await page.$eval('.orbit-ring--1', (el) => el.classList.contains('is-paused'))
-await page.screenshot({ path: path.join(shots, '08-stack-hover.png') })
+await page.waitForTimeout(1300)
+report.stackNodes = await page.locator('.orbit-node').count()
+await page.screenshot({ path: path.join(shots, '08-stack.png') })
 
-/* metrics + timeline */
-await page.evaluate(() => document.querySelector('.timeline')?.scrollIntoView())
-await page.waitForTimeout(1400)
-await page.screenshot({ path: path.join(shots, '09-timeline.png') })
+/* journey */
+await page.evaluate(() => document.getElementById('journey')?.scrollIntoView())
+await page.waitForTimeout(1500)
+report.timelineEntries = await page.locator('.timeline-entry').count()
+await page.screenshot({ path: path.join(shots, '09-journey.png') })
 
 /* contact */
 await page.evaluate(() => document.getElementById('contact')?.scrollIntoView())
 await page.waitForTimeout(1400)
 await page.screenshot({ path: path.join(shots, '10-contact.png') })
 
-report.metrics = await page.$$eval('.metric__value', (els) => els.map((e) => e.textContent?.trim()))
+/* finale */
+await page.evaluate(() => document.getElementById('finale')?.scrollIntoView())
+await page.waitForTimeout(1400)
+report.finaleText = await page.textContent('.finale-title')
+await page.screenshot({ path: path.join(shots, '11-finale.png') })
 
-/* full page — sweep the page first so every in-view reveal has fired */
+/* full page */
 await page.evaluate(async () => {
   const step = Math.round(window.innerHeight * 0.6)
   for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
@@ -151,30 +165,26 @@ await page.evaluate(async () => {
   }
   window.scrollTo(0, 0)
 })
-await page.waitForTimeout(1600)
-await page.screenshot({ path: path.join(shots, '11-full.png'), fullPage: true })
+await page.waitForTimeout(1700)
+await page.screenshot({ path: path.join(shots, '12-full.png'), fullPage: true })
 
 /* ---------- laptop ---------- */
 const laptop = await browser.newContext({ viewport: { width: 1024, height: 700 } })
 const lp = await laptop.newPage()
 attach(lp)
 await lp.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
-await lp.waitForTimeout(2200)
-report.overflow1024 = await lp.evaluate(
-  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-)
-await lp.screenshot({ path: path.join(shots, '12-laptop.png') })
+await lp.waitForTimeout(2600)
+report.overflow1024 = await overflow(lp)
+await lp.screenshot({ path: path.join(shots, '13-laptop.png') })
 
 /* ---------- tablet ---------- */
 const tablet = await browser.newContext({ viewport: { width: 768, height: 1024 } })
 const tp = await tablet.newPage()
 attach(tp)
 await tp.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
-await tp.waitForTimeout(2200)
-report.overflow768 = await tp.evaluate(
-  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-)
-await tp.screenshot({ path: path.join(shots, '13-tablet.png') })
+await tp.waitForTimeout(2600)
+report.overflow768 = await overflow(tp)
+await tp.screenshot({ path: path.join(shots, '14-tablet.png') })
 
 /* ---------- mobile ---------- */
 const mobile = await browser.newContext({
@@ -186,33 +196,20 @@ const mobile = await browser.newContext({
 const mp = await mobile.newPage()
 attach(mp)
 await mp.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
-await mp.waitForTimeout(2400)
-report.overflow375 = await mp.evaluate(
-  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-)
-await mp.screenshot({ path: path.join(shots, '14-mobile-hero.png') })
+await mp.waitForTimeout(3000)
+report.overflow375 = await overflow(mp)
+await mp.screenshot({ path: path.join(shots, '15-mobile-hero.png') })
 
-await mp.tap('.brand')
-await mp.waitForTimeout(700)
-await mp.screenshot({ path: path.join(shots, '15-mobile-menu.png') })
+await mp.tap('.header-status')
+await mp.waitForTimeout(900)
+await mp.screenshot({ path: path.join(shots, '16-mobile-menu.png') })
 await mp.tap('.menu-link >> nth=0')
-await mp.waitForTimeout(1500)
-await mp.screenshot({ path: path.join(shots, '16-mobile-work.png') })
+await mp.waitForTimeout(1800)
+await mp.screenshot({ path: path.join(shots, '17-mobile-work.png') })
 
-await mp.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-await mp.waitForTimeout(1200)
-await mp.screenshot({ path: path.join(shots, '17-mobile-contact.png') })
-
-await mp.evaluate(async () => {
-  const step = Math.round(window.innerHeight * 0.6)
-  for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
-    window.scrollTo(0, y)
-    await new Promise((r) => setTimeout(r, 100))
-  }
-  window.scrollTo(0, 0)
-})
-await mp.waitForTimeout(1500)
-await mp.screenshot({ path: path.join(shots, '18-mobile-full.png'), fullPage: true })
+await mp.evaluate(() => document.getElementById('contact')?.scrollIntoView())
+await mp.waitForTimeout(1300)
+await mp.screenshot({ path: path.join(shots, '18-mobile-contact.png') })
 
 /* ---------- 320px ---------- */
 const tiny = await browser.newContext({
@@ -223,11 +220,22 @@ const tiny = await browser.newContext({
 const tinyPage = await tiny.newPage()
 attach(tinyPage)
 await tinyPage.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
-await tinyPage.waitForTimeout(2000)
-report.overflow320 = await tinyPage.evaluate(
-  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-)
+await tinyPage.waitForTimeout(2600)
+report.overflow320 = await overflow(tinyPage)
 await tinyPage.screenshot({ path: path.join(shots, '19-320.png') })
+
+/* ---------- reduced motion ---------- */
+const reducedCtx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+  reducedMotion: 'reduce',
+})
+const rp = await reducedCtx.newPage()
+attach(rp)
+await rp.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
+await rp.waitForTimeout(2000)
+report.reducedOverflow = await overflow(rp)
+await rp.screenshot({ path: path.join(shots, '20-reduced.png') })
+report.reducedErrors = report.pageErrors.length
 
 await browser.close()
 server.close()
