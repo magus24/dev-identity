@@ -841,12 +841,16 @@ body::after {
 .core-fallback-svg {
   width: 100%;
   height: auto;
-  animation: core-spin 44s linear infinite;
 }
 
-.core-fallback-svg .core-fb-rings {
+.core-fallback-svg .core-fb-boundary {
   transform-origin: 0 0;
-  animation: core-rings 30s linear infinite;
+  animation: core-rings 42s linear infinite;
+}
+
+.core-fallback-svg .core-fb-crystal {
+  transform-origin: 0 0;
+  animation: core-spin 26s linear infinite;
 }
 
 @keyframes core-spin {
@@ -864,33 +868,31 @@ body::after {
   }
 }
 
-.core-fallback-svg .core-fb-nodes {
-  animation: core-node-pulse 3.4s var(--ease-io) infinite;
+.core-fallback-svg .core-fb-filaments path {
+  stroke: rgba(150, 158, 184, 0.22);
+  stroke-width: 0.7;
 }
 
-.core-fallback-svg .core-fb-nodes circle:nth-child(2) {
-  animation-delay: 0.6s;
+.core-fallback-svg .core-fb-nodes circle {
+  fill: #f5f5f5;
+  animation: core-node-pulse 4.2s var(--ease-io) infinite;
 }
 
-.core-fallback-svg .core-fb-nodes circle:nth-child(3) {
-  animation-delay: 1.2s;
+.core-fallback-svg .core-fb-nodes circle:nth-child(3n + 2) {
+  animation-delay: 0.9s;
 }
 
-.core-fallback-svg .core-fb-nodes circle:nth-child(4) {
+.core-fallback-svg .core-fb-nodes circle:nth-child(3n) {
   animation-delay: 1.8s;
-}
-
-.core-fallback-svg .core-fb-nodes circle:nth-child(5) {
-  animation-delay: 2.4s;
 }
 
 @keyframes core-node-pulse {
   0%,
   100% {
-    opacity: 0.35;
+    opacity: 0.3;
   }
   50% {
-    opacity: 1;
+    opacity: 0.95;
   }
 }
 

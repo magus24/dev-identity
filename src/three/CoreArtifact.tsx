@@ -1,23 +1,23 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import type { Spec } from '../hooks/useScrollStory'
-import { CORE_TARGETS, type CoreTarget } from './coreStates'
-import { CoreFallback } from './CoreFallback'
-import { NeuralCore } from './NeuralCore'
+import { CORE_TARGETS, type CoreTarget } from '../components/coreStates'
+import type { CoreEvent } from './NeuralField'
 
 interface DragState {
   sx: number
   sy: number
 }
 
-interface CoreSceneProps {
+interface CoreArtifactProps {
   spec: Spec
   section: string
   velocity: RefObject<number>
-  projectId: RefObject<string | null>
+  drag: DragState
   reducedMotion: boolean
+  corePulse: RefObject<CoreEvent>
 }
 
 function ringGeometry(radius: number, segments = 96) {
@@ -62,13 +62,14 @@ function particleGeometry(count: number) {
   return geo
 }
 
-function Core({
+export function CoreArtifact({
   spec,
   section,
   velocity,
   drag,
   reducedMotion,
-}: { spec: Spec; section: string; velocity: RefObject<number>; drag: DragState; reducedMotion: boolean }) {
+  corePulse,
+}: CoreArtifactProps) {
   const group = useRef<THREE.Group>(null)
   const inner = useRef<THREE.Group>(null)
   const octa = useRef<THREE.Group>(null)
@@ -85,6 +86,7 @@ function Core({
   const spin = useRef(0)
   const lastT = useRef(0)
   const cur = useRef<CoreTarget>({ ...CORE_TARGETS.seed })
+  const pulse = useRef(0)
 
   const geometries = useMemo(
     () => ({
@@ -162,57 +164,63 @@ function Core({
       spin.current += c.speed * (1 + (velocity.current ?? 0) * 1.4) * dt
     }
 
+    /* core response to incoming neural signals: short damped bloom */
+    const pulseT = corePulse.current?.target ?? 0
+    corePulse.current.target *= Math.exp(-dt * 2.4)
+    pulse.current = THREE.MathUtils.damp(pulse.current, Math.min(pulseT, 1), 6, dt)
+    const p = pulse.current
+
     const aspect = size.width / Math.max(size.height, 1)
-    const fov =
-      camera instanceof THREE.PerspectiveCamera ? camera.fov : 34
+    const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 34
     const halfH = Math.tan((fov * Math.PI) / 360) * 4.6
+    const dampV = (current: number, to: number) => THREE.MathUtils.damp(current, to, 3, dt)
 
     if (group.current) {
       const g = group.current
-      g.position.x = dampValue(g.position.x, c.x * halfH * aspect, dt)
-      g.position.y = dampValue(g.position.y, c.yk * halfH, dt)
-      g.position.z = dampValue(g.position.z, c.z, dt)
-      g.scale.setScalar(c.scale)
+      g.position.x = dampV(g.position.x, c.x * halfH * aspect)
+      g.position.y = dampV(g.position.y, c.yk * halfH)
+      g.position.z = dampV(g.position.z, c.z)
+      g.scale.setScalar(c.scale * (1 + p * 0.025))
       g.rotation.y = spin.current + pointer.x * 0.22
-      g.rotation.x = dampValue(g.rotation.x, pointer.y * 0.2 + drag.sy * 0.5, dt)
-      g.rotation.z = dampValue(g.rotation.z, drag.sx * 0.3, dt)
+      g.rotation.x = dampV(g.rotation.x, pointer.y * 0.2 + drag.sy * 0.5)
+      g.rotation.z = dampV(g.rotation.z, drag.sx * 0.3)
     }
 
     if (inner.current) {
       const g = inner.current
-      g.rotation.y = dampValue(g.rotation.y, -spin.current * 1.7, dt)
+      g.rotation.y = dampV(g.rotation.y, -spin.current * 1.7)
       g.rotation.x = 0.7
       g.scale.setScalar(0.66)
     }
     if (octa.current) {
       const g = octa.current
-      g.rotation.y = dampValue(g.rotation.y, spin.current * 2.4, dt)
-      g.rotation.z = dampValue(g.rotation.z, reducedMotion ? 0 : t * 0.35, dt)
-      g.scale.setScalar(c.octa)
+      g.rotation.y = dampV(g.rotation.y, spin.current * 2.4)
+      g.rotation.z = dampV(g.rotation.z, reducedMotion ? 0 : t * 0.35 + p * 1.4)
+      g.scale.setScalar(c.octa * (1 + p * 0.06))
     }
     if (rings.current) {
       const g = rings.current
-      g.rotation.x = dampValue(g.rotation.x, c.tilt, dt)
-      g.rotation.y = dampValue(g.rotation.y, spin.current * 0.8, dt)
-      g.rotation.z = dampValue(g.rotation.z, reducedMotion ? 0 : t * 0.14, dt)
-      g.scale.setScalar(c.ringScale)
+      g.rotation.x = dampV(g.rotation.x, c.tilt + p * 0.1)
+      g.rotation.y = dampV(g.rotation.y, spin.current * 0.8)
+      g.rotation.z = dampV(g.rotation.z, reducedMotion ? 0 : t * 0.14)
+      g.scale.setScalar(c.ringScale * (1 + p * 0.03))
     }
     if (parts.current) {
-      const p = parts.current
-      p.rotation.y = dampValue(p.rotation.y, spin.current * 0.5, dt)
-      p.scale.set(c.pScale, c.pScale, c.pScale * c.pFlatten)
+      const q = parts.current
+      q.rotation.y = dampV(q.rotation.y, spin.current * 0.5)
+      q.scale.set(c.pScale, c.pScale, c.pScale * c.pFlatten)
     }
 
-    if (outerMat.current) outerMat.current.opacity = c.outer
-    if (innerMat.current) innerMat.current.opacity = c.inner
-    if (octaMat.current) octaMat.current.opacity = 0.4 + c.octa * 0.55
-    if (ballMat.current) ballMat.current.opacity = c.ball * 0.9
-    if (ringMat.current) ringMat.current.opacity = c.ringOp
-    if (partsMat.current) partsMat.current.opacity = c.pOp
+    if (outerMat.current) outerMat.current.opacity = c.outer + p * 0.25
+    if (innerMat.current) innerMat.current.opacity = c.inner + p * 0.3
+    if (octaMat.current) octaMat.current.opacity = 0.4 + c.octa * 0.55 + p * 0.2
+    if (ballMat.current) ballMat.current.opacity = c.ball * 0.9 + p * 0.4
+    if (ringMat.current) ringMat.current.opacity = c.ringOp + p * 0.15
+    if (partsMat.current) partsMat.current.opacity = c.pOp + p * 0.15
 
     if (spec.parallax && !reducedMotion) {
-      camera.position.x = dampValue(camera.position.x, pointer.x * 0.55, dt)
-      camera.position.y = dampValue(camera.position.y, -pointer.y * 0.35, dt)
+      camera.position.x = dampV(camera.position.x, pointer.x * 0.55)
+      camera.position.y = dampV(camera.position.y, -pointer.y * 0.35)
       camera.lookAt(0, 0, 0)
     }
   })
@@ -238,79 +246,5 @@ function Core({
         <points ref={parts} geometry={geometries.parts} material={materials.parts} />
       </group>
     </group>
-  )
-}
-
-function dampValue(current: number, target: number, dt: number) {
-  return THREE.MathUtils.damp(current, target, 3, dt)
-}
-
-export function CoreScene({
-  spec,
-  section,
-  velocity,
-  projectId,
-  reducedMotion,
-}: CoreSceneProps) {
-  const drag = useMemo<DragState>(() => ({ sx: 0, sy: 0 }), [])
-
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
-    event.currentTarget.dataset.dragging = 'true'
-  }
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.currentTarget.dataset.dragging !== 'true') return
-    drag.sx = (drag.sx + event.movementX * 0.004) % (Math.PI * 2)
-    drag.sy = (drag.sy + event.movementY * 0.003) % (Math.PI * 2)
-  }
-  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    const el = event.currentTarget
-    if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId)
-    delete el.dataset.dragging
-  }
-
-  return (
-    <div className="core-stage" aria-hidden="true">
-      {spec.enabled ? (
-        <Canvas
-          dpr={spec.dpr}
-          frameloop={reducedMotion ? 'demand' : 'always'}
-          camera={{ position: [0, 0, 4.6], fov: 34, near: 0.1, far: 24 }}
-          gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
-        >
-          <Core
-            spec={spec}
-            section={section}
-            velocity={velocity}
-            drag={drag}
-            reducedMotion={reducedMotion}
-          />
-          {spec.particles > 0 && (
-            <NeuralCore
-              spec={spec}
-              section={section}
-              projectId={projectId}
-              velocity={velocity}
-              reducedMotion={reducedMotion}
-            />
-          )}
-        </Canvas>
-      ) : (
-        <div className="core-fallback">
-          <CoreFallback />
-        </div>
-      )}
-      {spec.dragRotate && !reducedMotion && (
-        <div
-          className="core-grab"
-          style={{ right: 'calc(var(--pad) + 2vw)', top: '24vh' }}
-          data-cursor="rotate"
-          role="presentation"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-        />
-      )}
-    </div>
   )
 }

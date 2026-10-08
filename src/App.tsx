@@ -28,7 +28,7 @@ import { Contact } from './sections/Contact'
 import { Finale } from './sections/Finale'
 
 const CoreScene = lazy(() =>
-  import('./components/CoreScene').then((m) => ({ default: m.CoreScene })),
+  import('./three/CoreScene').then((m) => ({ default: m.CoreScene })),
 )
 
 interface OverlayState {
