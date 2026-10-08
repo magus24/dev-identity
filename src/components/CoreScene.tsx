@@ -3,7 +3,9 @@ import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import type { Spec } from '../hooks/useScrollStory'
+import { CORE_TARGETS, type CoreTarget } from './coreStates'
 import { CoreFallback } from './CoreFallback'
+import { NeuralCore } from './NeuralCore'
 
 interface DragState {
   sx: number
@@ -14,48 +16,8 @@ interface CoreSceneProps {
   spec: Spec
   section: string
   velocity: RefObject<number>
+  projectId: RefObject<string | null>
   reducedMotion: boolean
-}
-
-interface CoreTarget {
-  x: number
-  yk: number
-  z: number
-  scale: number
-  outer: number
-  inner: number
-  octa: number
-  ball: number
-  ringScale: number
-  ringOp: number
-  tilt: number
-  pScale: number
-  pFlatten: number
-  pOp: number
-  speed: number
-}
-
-const STATES: Record<string, CoreTarget> = {
-  seed: {
-    x: 0.66, yk: 0.12, z: 0, scale: 0.85, outer: 0.5, inner: 0.2, octa: 0.85, ball: 1,
-    ringScale: 0.62, ringOp: 0.3, tilt: 1.25, pScale: 1, pFlatten: 0.85, pOp: 0.5, speed: 0.1,
-  },
-  open: {
-    x: 0.58, yk: -0.04, z: 0, scale: 0.95, outer: 0.72, inner: 0.5, octa: 1.1, ball: 1,
-    ringScale: 1.05, ringOp: 0.5, tilt: 0.85, pScale: 1.12, pFlatten: 0.7, pOp: 0.7, speed: 0.14,
-  },
-  systems: {
-    x: 0.5, yk: 0.16, z: -0.25, scale: 1.02, outer: 0.8, inner: 0.65, octa: 0.7, ball: 1,
-    ringScale: 1.28, ringOp: 0.55, tilt: 0.5, pScale: 1.32, pFlatten: 0.5, pOp: 0.8, speed: 0.19,
-  },
-  network: {
-    x: 0.34, yk: 0.55, z: 0.4, scale: 0.5, outer: 0.28, inner: 0.14, octa: 0.5, ball: 1,
-    ringScale: 2, ringOp: 0.75, tilt: 0.1, pScale: 1.7, pFlatten: 0.05, pOp: 0.9, speed: 0.24,
-  },
-  reassemble: {
-    x: 0, yk: 0, z: 0.65, scale: 1.18, outer: 0.95, inner: 0.85, octa: 1.5, ball: 1,
-    ringScale: 0.5, ringOp: 0.8, tilt: 1.45, pScale: 0.8, pFlatten: 0.95, pOp: 0.9, speed: 0.06,
-  },
 }
 
 function ringGeometry(radius: number, segments = 96) {
@@ -106,7 +68,7 @@ function Core({
   velocity,
   drag,
   reducedMotion,
-}: CoreSceneProps & { drag: DragState }) {
+}: { spec: Spec; section: string; velocity: RefObject<number>; drag: DragState; reducedMotion: boolean }) {
   const group = useRef<THREE.Group>(null)
   const inner = useRef<THREE.Group>(null)
   const octa = useRef<THREE.Group>(null)
@@ -122,7 +84,7 @@ function Core({
   const pointer = useMemo(() => ({ x: 0, y: 0 }), [])
   const spin = useRef(0)
   const lastT = useRef(0)
-  const cur = useRef<CoreTarget>({ ...STATES.seed })
+  const cur = useRef<CoreTarget>({ ...CORE_TARGETS.seed })
 
   const geometries = useMemo(
     () => ({
@@ -175,7 +137,7 @@ function Core({
     const dt = lastT.current === 0 ? 0.016 : Math.min(t - lastT.current, 0.05)
     lastT.current = t
 
-    const target = STATES[section] ?? STATES.seed
+    const target = CORE_TARGETS[section] ?? CORE_TARGETS.seed
     const c = cur.current
     const damp = (k: keyof CoreTarget) =>
       (c[k] = THREE.MathUtils.damp(c[k] as number, target[k] as number, 3.2, dt))
@@ -283,7 +245,13 @@ function dampValue(current: number, target: number, dt: number) {
   return THREE.MathUtils.damp(current, target, 3, dt)
 }
 
-export function CoreScene({ spec, section, velocity, reducedMotion }: CoreSceneProps) {
+export function CoreScene({
+  spec,
+  section,
+  velocity,
+  projectId,
+  reducedMotion,
+}: CoreSceneProps) {
   const drag = useMemo<DragState>(() => ({ sx: 0, sy: 0 }), [])
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -317,6 +285,15 @@ export function CoreScene({ spec, section, velocity, reducedMotion }: CoreSceneP
             drag={drag}
             reducedMotion={reducedMotion}
           />
+          {spec.particles > 0 && (
+            <NeuralCore
+              spec={spec}
+              section={section}
+              projectId={projectId}
+              velocity={velocity}
+              reducedMotion={reducedMotion}
+            />
+          )}
         </Canvas>
       ) : (
         <div className="core-fallback">
@@ -327,7 +304,7 @@ export function CoreScene({ spec, section, velocity, reducedMotion }: CoreSceneP
         <div
           className="core-grab"
           style={{ right: 'calc(var(--pad) + 2vw)', top: '24vh' }}
-          data-cursor="drag"
+          data-cursor="rotate"
           role="presentation"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

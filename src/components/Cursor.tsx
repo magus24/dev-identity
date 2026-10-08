@@ -1,15 +1,30 @@
 import { useEffect, useRef } from 'react'
+import { useI18n } from '../i18n/provider'
 
 /**
  * Context-aware cursor. Rings are driven with a manual lerp loop so
  * the whole system stays out of React's render path.
- * Elements opt in with [data-cursor="VIEW|OPEN|DRAG|GO"] to show a label.
+ * Elements opt in with [data-cursor="view|open|go|drag|rotate|node|language"]
+ * to show a localized label.
  */
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLDivElement>(null)
   const labelRef = useRef<HTMLSpanElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const { t } = useI18n()
+
+  const labels: Record<string, string> = {
+    view: t('cursor.view'),
+    open: t('cursor.open'),
+    go: t('cursor.go'),
+    drag: t('cursor.drag'),
+    rotate: t('cursor.rotate'),
+    node: t('cursor.node'),
+    language: t('cursor.language'),
+  }
+  const labelsRef = useRef(labels)
+  labelsRef.current = labels
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -55,11 +70,15 @@ export function Cursor() {
         'a, button, [role="button"], input, summary',
       )
 
-      if (labelled) {
+      const label = labelled
+        ? labelsRef.current[String(labelled.dataset.cursor).toLowerCase()]
+        : undefined
+
+      if (labelled && label) {
         root.classList.add('is-label')
         root.classList.remove('is-hover')
         hovering = false
-        if (labelRef.current) labelRef.current.textContent = labelled.dataset.cursor ?? ''
+        if (labelRef.current) labelRef.current.textContent = label
       } else {
         root.classList.remove('is-label')
         if (interactive) {

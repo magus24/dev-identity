@@ -68,6 +68,7 @@ export function useCapabilities(): Spec {
 export function useScrollStory() {
   const [section, setSection] = useState<SectionId>('top')
   const velocity = useRef(0)
+  const projectId = useRef<string | null>(null)
 
   useEffect(() => {
     let lastY = window.scrollY
@@ -93,6 +94,19 @@ export function useScrollStory() {
       if (window.innerHeight + y >= document.documentElement.scrollHeight - 8) {
         current = 'finale'
       }
+
+      projectId.current =
+        current === 'work'
+          ? (() => {
+              let pid: string | null = null
+              const rows = document.querySelectorAll<HTMLElement>('[data-project]')
+              for (const row of rows) {
+                if (row.offsetTop <= probe) pid = row.dataset.project ?? null
+              }
+              return pid
+            })()
+          : null
+
       setSection((prev) => (prev === current ? prev : current))
       raf = requestAnimationFrame(update)
     }
@@ -101,5 +115,5 @@ export function useScrollStory() {
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  return { section, velocity }
+  return { section, velocity, projectId }
 }

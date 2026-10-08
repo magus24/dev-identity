@@ -1,17 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { useI18n } from '../i18n/provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-
-const SHORTCUTS = [
-  { keys: ['/'], value: 'Open command palette' },
-  { keys: ['?'], value: 'Show this guide' },
-  { keys: ['ESC'], value: 'Close overlays' },
-  { keys: ['D'], value: 'Back to top' },
-  { keys: ['CORE drag'], value: 'Rotate the object' },
-  { keys: ['Scroll'], value: 'Morph the CORE by chapter' },
-]
 
 interface GuideProps {
   open: boolean
@@ -19,6 +11,8 @@ interface GuideProps {
 }
 
 export function Guide({ open, onClose }: GuideProps) {
+  const { t, messages } = useI18n()
+
   useEffect(() => {
     if (!open) return
     const previous = document.body.style.overflow
@@ -36,7 +30,7 @@ export function Guide({ open, onClose }: GuideProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+        <div role="dialog" aria-modal="true" aria-label={t('guide.aria')}>
           <motion.div
             className="overlay-backdrop"
             initial={{ opacity: 0 }}
@@ -55,15 +49,16 @@ export function Guide({ open, onClose }: GuideProps) {
             <div className="guide-panel">
               <div className="guide-head">
                 <span className="mono">
-                  Shortcuts — <b style={{ color: 'var(--fg)' }}>how to drive this engine</b>
+                  {t('guide.titlePre')}
+                  <b style={{ color: 'var(--fg)' }}>{t('guide.titleEm')}</b>
                 </span>
                 <button type="button" className="header-status" onClick={onClose}>
-                  Close
+                  {t('app.close')}
                   <X size={14} strokeWidth={1.5} aria-hidden="true" />
                 </button>
               </div>
               <div className="guide-body">
-                {SHORTCUTS.map((row) => (
+                {messages.guide.rows.map((row) => (
                   <div className="guide-row" key={row.value}>
                     <span className="k">
                       {row.keys.map((key) => (

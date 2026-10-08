@@ -1,19 +1,23 @@
-import { STACK, RING_RADIUS } from '../data/stack'
+import { RING_RADIUS } from '../data/stack'
 import { SectionLabel, Reveal } from '../components/Primitives'
+import { useLocalizedContent } from '../i18n/content'
+import { useI18n } from '../i18n/provider'
 
 function angleFor(index: number, count: number, offset: number) {
   return (index / Math.max(count, 1)) * 360 + offset
 }
 
 export function Stack() {
-  const ring1 = STACK.filter((s) => s.ring === 1)
-  const ring2 = STACK.filter((s) => s.ring === 2)
+  const { stack } = useLocalizedContent()
+  const { t } = useI18n()
+  const ring1 = stack.filter((s) => s.ring === 1)
+  const ring2 = stack.filter((s) => s.ring === 2)
 
   return (
-    <section id="stack" className="section" aria-label="Technology stack">
-      <SectionLabel index="04" title="Stack — Technology orbit" />
+    <section id="stack" className="section" aria-label={t('stack.aria')}>
+      <SectionLabel index="04" title={t('stack.sectionTitle')} />
       <p className="lede" style={{ marginTop: -28, marginBottom: 56 }}>
-        Everything orbits the core. Hover a node to bring it into focus.
+        {t('stack.lede')}
       </p>
 
       <Reveal>
@@ -54,8 +58,8 @@ export function Stack() {
                 <polygon points="32 20 43 29 39 45 25 45 21 29 32 20" fill="rgba(77,124,255,0.16)" stroke="#4d7cff" strokeWidth="1.2" />
                 <circle cx="32" cy="31" r="3" fill="#4d7cff" />
               </svg>
-              <span className="core-label">Core</span>
-              <span className="core-sub">ideas → systems</span>
+              <span className="core-label">{t('stack.coreLabel')}</span>
+              <span className="core-sub">{t('stack.coreSub')}</span>
             </div>
           </div>
         </div>
@@ -63,10 +67,10 @@ export function Stack() {
 
       <div className="stack-legend">
         <span>
-          ring 1 — <b>core engineering · {ring1.length}</b>
+          {t('stack.legendRing1')} — <b>{ring1.length}</b>
         </span>
         <span>
-          ring 2 — <b>systems &amp; operations · {ring2.length}</b>
+          {t('stack.legendRing2')} — <b>{ring2.length}</b>
         </span>
       </div>
     </section>

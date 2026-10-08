@@ -1,32 +1,28 @@
 import { ArrowRight } from 'lucide-react'
 import { LineReveal, Reveal } from '../components/Primitives'
-
-const STEPS = [
-  { index: '01', name: 'Idea', note: 'a signal worth pursuing' },
-  { index: '02', name: 'System', note: 'turned into an architecture' },
-  { index: '03', name: 'Product', note: 'shipped, measured, kept alive' },
-]
+import { useI18n } from '../i18n/provider'
 
 export function Ideas() {
+  const { t, messages } = useI18n()
+
   return (
-    <section id="ideas" className="section ideas" aria-label="Manifesto">
+    <section id="ideas" className="section ideas" aria-label={t('ideas.aria')}>
       <p className="ideas-statement">
-        <LineReveal text="A portfolio is" />
-        <LineReveal text="not a list of works —" delay={0.08} className="oxford" />
-        <LineReveal text="it is a system:" delay={0.16} />
-        <LineReveal text="ideas in, products out." delay={0.24} className="oxford" />
+        {messages.ideas.statement.map((line, i) => (
+          <LineReveal key={line} text={line} delay={0.08 * i} className={i % 2 === 1 ? 'oxford' : ''} />
+        ))}
       </p>
 
       <Reveal delay={0.2}>
         <div className="ideas-flow">
-          {STEPS.map((step, i) => (
-            <div className="ideas-step" key={step.index}>
-              <span className="step-num">{step.index}</span>
+          {messages.ideas.steps.map((step, i) => (
+            <div className="ideas-step" key={step.name}>
+              <span className="step-num">0{i + 1}</span>
               <span className="step-name">{step.name}</span>
               <span className="mono" style={{ marginTop: 10, display: 'block' }}>
                 {step.note}
               </span>
-              {i < STEPS.length - 1 && (
+              {i < messages.ideas.steps.length - 1 && (
                 <ArrowRight
                   className="step-arrow"
                   size={22}
@@ -39,7 +35,7 @@ export function Ideas() {
         </div>
       </Reveal>
       <p className="mono" style={{ marginTop: 18 }}>
-        Everything on this page is a function of data, geometry and intent.
+        {t('ideas.footer')}
       </p>
     </section>
   )

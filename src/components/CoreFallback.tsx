@@ -39,6 +39,26 @@ export function CoreFallback() {
         <circle cx="28" cy="-100" r="1.6" fill="#4d7cff" />
         <circle cx="-64" cy="98" r="1.6" fill="#4d7cff" />
       </g>
+      <g className="core-fb-net" fill="none" strokeWidth="1">
+        <circle
+          cx="0"
+          cy="0"
+          r="66"
+          stroke="rgba(77,124,255,0.3)"
+          strokeDasharray="2 9"
+        />
+        <path
+          d="M0 0 L66 0 M0 0 L33 -57 M0 0 L-47 46 M0 0 L-58 -32 M0 0 L22 62"
+          stroke="rgba(77,124,255,0.32)"
+        />
+      </g>
+      <g className="core-fb-nodes" fill="#4d7cff">
+        <circle cx="66" cy="0" r="2.6" />
+        <circle cx="33" cy="-57" r="2.2" />
+        <circle cx="-47" cy="46" r="2.2" />
+        <circle cx="-58" cy="-32" r="2.4" />
+        <circle cx="22" cy="62" r="2.2" />
+      </g>
     </svg>
   )
 }

@@ -1,18 +1,21 @@
 import { motion, useScroll, useSpring } from 'framer-motion'
 import { useRef } from 'react'
-import { TIMELINE } from '../data/timeline'
 import { SectionLabel } from '../components/Primitives'
+import { useLocalizedContent } from '../i18n/content'
+import { useI18n } from '../i18n/provider'
 
 export function Journey() {
   const ref = useRef<HTMLDivElement>(null)
+  const { timeline } = useLocalizedContent()
+  const { t } = useI18n()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 70%', 'end 75%'] })
   const scaleY = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.4 })
 
   return (
-    <section id="journey" className="section" aria-label="Journey">
-      <SectionLabel index="05" title="Journey — build history" />
+    <section id="journey" className="section" aria-label={t('journey.aria')}>
+      <SectionLabel index="05" title={t('journey.sectionTitle')} />
       <p className="lede" style={{ marginTop: -28, marginBottom: 56 }}>
-        The short version: each year added a layer — first pages, then systems.
+        {t('journey.lede')}
       </p>
 
       <div ref={ref} className="timeline">
@@ -20,7 +23,7 @@ export function Journey() {
           <motion.div className="fill" style={{ scaleY }} />
         </div>
 
-        {TIMELINE.map((entry) => (
+        {timeline.map((entry) => (
           <article
             key={entry.year}
             className="timeline-entry"

@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUpRight, CornerDownLeft, Globe } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MENU_ITEMS } from '../data/navigation'
 import { PROFILE } from '../data/profile'
 import { prefersReducedMotion } from '../hooks/useMediaQuery'
+import { useLocalizedContent } from '../i18n/content'
+import { useI18n } from '../i18n/provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -24,6 +25,8 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
   const [index, setIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const { t, messages } = useI18n()
+  const { menuItems } = useLocalizedContent()
 
   const goTo = useCallback((id: string) => {
     const el = document.getElementById(id)
@@ -37,23 +40,23 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
     () => [
       {
         id: 'top',
-        group: 'Navigation',
-        name: 'Back to top',
+        group: messages.command.groupNav,
+        name: messages.command.backToTop,
         run: () =>
           window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' }),
       },
-      ...MENU_ITEMS.map((item) => ({
+      ...menuItems.map((item) => ({
         id: item.target,
-        group: 'Sections',
+        group: messages.command.groupSections,
         name: item.label.toLowerCase(),
         run: () => goTo(item.target),
       })),
-      { id: 'gh', group: 'Contact', name: PROFILE.github, run: () => window.open(PROFILE.github, '_blank', 'noopener') },
-      { id: 'tg', group: 'Contact', name: `telegram · ${PROFILE.telegram}`, run: () => window.open(PROFILE.telegram, '_blank', 'noopener') },
-      { id: 'in', group: 'Contact', name: PROFILE.linkedin, run: () => window.open(PROFILE.linkedin, '_blank', 'noopener') },
-      { id: 'em', group: 'Contact', name: PROFILE.email, run: () => (window.location.href = `mailto:${PROFILE.email}`) },
+      { id: 'gh', group: messages.command.groupContact, name: PROFILE.github, run: () => window.open(PROFILE.github, '_blank', 'noopener') },
+      { id: 'tg', group: messages.command.groupContact, name: `telegram · ${PROFILE.telegram}`, run: () => window.open(PROFILE.telegram, '_blank', 'noopener') },
+      { id: 'in', group: messages.command.groupContact, name: PROFILE.linkedin, run: () => window.open(PROFILE.linkedin, '_blank', 'noopener') },
+      { id: 'em', group: messages.command.groupContact, name: PROFILE.email, run: () => (window.location.href = `mailto:${PROFILE.email}`) },
     ],
-    [goTo],
+    [goTo, menuItems, messages],
   )
 
   const filtered = useMemo(() => {
@@ -98,7 +101,7 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div role="dialog" aria-modal="true" aria-label="Command menu">
+        <div role="dialog" aria-modal="true" aria-label={t('command.aria')}>
           <motion.div
             className="overlay-backdrop"
             initial={{ opacity: 0 }}
@@ -138,14 +141,14 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
                   {'>'}
                 </span>
                 <label htmlFor="cmd-input" className="visually-hidden">
-                  Type a command
+                  {t('command.inputLabel')}
                 </label>
                 <input
                   ref={inputRef}
                   id="cmd-input"
                   className="cmd-input"
                   type="text"
-                  placeholder="navigate, contact, or go somewhere…"
+                  placeholder={t('command.placeholder')}
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value)
@@ -154,9 +157,11 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
                 />
                 <CornerDownLeft size={14} strokeWidth={1.5} color="var(--dim)" aria-hidden="true" />
               </div>
-              <div ref={listRef} className="cmd-list" role="listbox" aria-label="Commands">
+              <div ref={listRef} className="cmd-list" role="listbox" aria-label={t('command.commandsAria')}>
                 {filtered.length === 0 && (
-                  <div className="cmd-empty">Nothing found for “{query}”</div>
+                  <div className="cmd-empty">
+                    {t('command.empty').replace('{query}', query)}
+                  </div>
                 )}
                 {filtered.map((action, i) => (
                   <button
@@ -172,7 +177,7 @@ export function CommandMenu({ open, onClose }: CommandMenuProps) {
                     <span className="idx">{String(i + 1).padStart(2, '0')}</span>
                     <span className="name">{action.name}</span>
                     <span className="group">{action.group}</span>
-                    {action.group === 'Sections' ? (
+                    {action.group === messages.command.groupSections ? (
                       <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden="true" />
                     ) : (
                       <Globe size={14} strokeWidth={1.5} aria-hidden="true" />

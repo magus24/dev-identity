@@ -86,6 +86,32 @@ report.overflowDesktop = await overflow(page)
 report.fonts = await page.evaluate(() => document.fonts.check('16px "Space Grotesk Variable"'))
 report.coreCanvasCount = await page.locator('.core-stage canvas').count()
 
+/* language switch: force EN (detected may be ru on this machine), then EN->RU with fade, then back to EN */
+report.langInlineVisible = await page.locator('.lang-switch--inline').isVisible()
+await page.click('.lang-switch--inline button[aria-label="English"]')
+await page.waitForTimeout(900)
+report.enHtml = await page.getAttribute('html', 'lang')
+await page.screenshot({ path: path.join(shots, '00-en.png') })
+await page.click('.lang-switch--inline button[aria-label="Русский"]')
+await page.waitForTimeout(60)
+report.fadeDuringSwitch = await page.evaluate(() => {
+  const el = document.querySelector('.app')
+  return el ? el.classList.contains('app-fade') : null
+})
+await page.waitForTimeout(900)
+report.fadeGone = await page.evaluate(() => {
+  const el = document.querySelector('.app')
+  return el ? el.classList.contains('app-fade') : null
+})
+report.ruHtmlLang = await page.getAttribute('html', 'lang')
+report.ruTitle = await page.title()
+report.ruStorage = await page.evaluate(() => localStorage.getItem('portfolio-language'))
+report.ruCoreCanvas = await page.locator('.core-stage canvas').count()
+await page.screenshot({ path: path.join(shots, '00-ru.png') })
+await page.click('.lang-switch--inline button[aria-label="English"]')
+await page.waitForTimeout(900)
+report.enBack = await page.getAttribute('html', 'lang')
+
 await page.screenshot({ path: path.join(shots, '01-hero.png') })
 
 /* command palette via / */
@@ -199,6 +225,9 @@ await mp.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
 await mp.waitForTimeout(3000)
 report.overflow375 = await overflow(mp)
 await mp.screenshot({ path: path.join(shots, '15-mobile-hero.png') })
+
+report.langPopVisible = await mp.locator('.lang-switch--pop').isVisible()
+report.langInlineHidden = await mp.locator('.lang-switch--inline').isHidden()
 
 await mp.tap('.header-status')
 await mp.waitForTimeout(900)

@@ -5,6 +5,7 @@ import type { Project } from '../data/projects'
 import { AntifakeMock } from './visuals/AntifakeMock'
 import { ShieldxMock } from './visuals/ShieldxMock'
 import { YotoqhonamMock } from './visuals/YotoqhonamMock'
+import { useI18n } from '../i18n/provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -21,6 +22,7 @@ interface ProjectOverlayProps {
 
 export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!project) return
@@ -49,7 +51,7 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
           className="case-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label={`${project.title} — case study`}
+          aria-label={t('projects.openCaseAria').replace('{title}', project.title)}
           initial={{ opacity: 0, y: 48 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 32 }}
@@ -57,10 +59,10 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
         >
           <div className="case-bar">
             <span className="mono">
-              Case {project.index} — {project.meta.type}
+              {t('projects.caseLabel')} {project.index} — {project.meta.type}
             </span>
             <button ref={closeRef} type="button" className="case-close" onClick={onClose}>
-              Close
+              {t('app.close')}
               <X size={14} strokeWidth={1.5} aria-hidden="true" />
             </button>
           </div>
@@ -103,24 +105,24 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
 
             <div className="case-grid">
               <div className="case-block">
-                <h4>Overview</h4>
+                <h4>{t('projects.fieldOverview')}</h4>
                 <p>{project.case.overview}</p>
               </div>
               <div className="case-block">
-                <h4>Challenge</h4>
+                <h4>{t('projects.fieldChallenge')}</h4>
                 <p>{project.case.challenge}</p>
               </div>
               <div className="case-block">
-                <h4>Solution</h4>
+                <h4>{t('projects.fieldSolution')}</h4>
                 <p>{project.case.solution}</p>
               </div>
               <div className="case-block">
-                <h4>Result</h4>
+                <h4>{t('projects.fieldResult')}</h4>
                 <p>{project.case.result}</p>
               </div>
             </div>
 
-            <ul className="case-tech" aria-label="Technology">
+            <ul className="case-tech" aria-label={t('projects.technologyAria')}>
               {project.case.technology.map((tech) => (
                 <li key={tech}>{tech}</li>
               ))}
@@ -134,9 +136,9 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
                     href={project.github}
                     target="_blank"
                     rel="noreferrer"
-                    data-cursor="OPEN"
+                    data-cursor="open"
                   >
-                    Source code
+                    {t('projects.sourceCode')}
                   </a>
                 )}
                 {project.demo && (
@@ -145,9 +147,9 @@ export function ProjectOverlay({ project, onClose }: ProjectOverlayProps) {
                     href={project.demo}
                     target="_blank"
                     rel="noreferrer"
-                    data-cursor="OPEN"
+                    data-cursor="open"
                   >
-                    Live demo
+                    {t('projects.liveDemo')}
                     <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden="true" />
                   </a>
                 )}

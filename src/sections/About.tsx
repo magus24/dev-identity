@@ -1,24 +1,27 @@
 import { PROFILE } from '../data/profile'
 import { Reveal, SectionLabel } from '../components/Primitives'
-
-const FACTS = [
-  { k: 'Name', v: PROFILE.name.toLowerCase() },
-  { k: 'Role', v: PROFILE.roles.join(' / ') },
-  { k: 'Focus', v: PROFILE.disciplines.join(' / ') },
-  { k: 'Location', v: PROFILE.location },
-  { k: 'Timezone', v: PROFILE.timezone },
-  { k: 'Status', v: PROFILE.availability[0] },
-]
+import { useI18n } from '../i18n/provider'
 
 export function About() {
+  const { t, messages } = useI18n()
+
+  const facts = [
+    { k: t('about.factName'), v: PROFILE.name.toLowerCase() },
+    { k: t('about.factRole'), v: PROFILE.roles.join(' / ') },
+    { k: t('about.factFocus'), v: messages.about.disciplines.join(' / ') },
+    { k: t('about.factLocation'), v: t('app.location') },
+    { k: t('about.factTimezone'), v: PROFILE.timezone },
+    { k: t('about.factStatus'), v: t('app.statusOpen') },
+  ]
+
   return (
-    <section id="about" className="section" aria-label="About">
-      <SectionLabel index="03" title="About" />
+    <section id="about" className="section" aria-label={t('about.aria')}>
+      <SectionLabel index="03" title={t('nav.about')} />
 
       <div className="about-grid">
         <div>
           <dl className="about-facts">
-            {FACTS.map((fact) => (
+            {facts.map((fact) => (
               <div className="about-fact" key={fact.k}>
                 <dt>{fact.k}</dt>
                 <dd>{fact.v}</dd>
@@ -30,16 +33,17 @@ export function About() {
         <div>
           <Reveal>
             <p className="about-manifesto">
-              I operate at the intersection of{' '}
-              <em>software, AI and security</em> — building interfaces, models and
-              defensive layers. The thread between them is the same: take a messy
-              problem, reduce it to a <em>system</em>, and ship it until it is useful.
+              {t('about.manifestoPre')}
+              <em>{t('about.manifestoEm1')}</em>
+              {t('about.manifestoMid')}
+              <em>{t('about.manifestoEm2')}</em>
+              {t('about.manifestoPost')}
             </p>
           </Reveal>
 
           <Reveal delay={0.12}>
             <div className="about-disciplines">
-              {PROFILE.disciplines.map((discipline, i) => (
+              {messages.about.disciplines.map((discipline, i) => (
                 <div className="about-discipline" key={discipline}>
                   <span className="d-num">0{i + 1}</span>
                   <span className="d-name">{discipline}</span>
@@ -49,20 +53,20 @@ export function About() {
           </Reveal>
 
           <Reveal delay={0.2}>
-            <div className="identity" aria-label="Identity card">
+            <div className="identity" aria-label={t('about.identityAria')}>
               <div className="identity-grid">
                 <div className="identity-mark">
                   D<i>/</i>P
                 </div>
                 <div className="identity-fields">
                   <div className="identity-field">
-                    <span className="k">System</span>
-                    <span className="v">D/P — build once, reuse forever</span>
+                    <span className="k">{t('about.identitySystem')}</span>
+                    <span className="v">{t('about.identitySystemValue')}</span>
                   </div>
                   <div className="identity-field">
-                    <span className="k">State</span>
+                    <span className="k">{t('about.identityState')}</span>
                     <span className="v" style={{ color: 'var(--success)' }}>
-                      Available for projects
+                      {t('about.identityStateValue')}
                     </span>
                   </div>
                 </div>

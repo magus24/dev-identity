@@ -5,6 +5,13 @@
 .app {
   position: relative;
   z-index: 4;
+  transition: opacity 0.3s var(--ease), filter 0.3s var(--ease);
+}
+
+.app-fade {
+  opacity: 0.55;
+  filter: blur(6px);
+  pointer-events: none;
 }
 
 /* ---------- HERO ---------- */

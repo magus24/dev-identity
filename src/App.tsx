@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useReducer } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { MotionConfig, useReducedMotion } from 'framer-motion'
 import { Background } from './components/Background'
 import { Cursor } from './components/Cursor'
@@ -9,10 +9,13 @@ import { ProjectOverlay } from './components/ProjectOverlay'
 import { CommandMenu } from './components/CommandMenu'
 import { Guide } from './components/Guide'
 import { CoreFallback } from './components/CoreFallback'
+import { CoreStatus } from './components/CoreStatus'
 import { CORE_STATES } from './data/navigation'
-import { PROFILE } from './data/profile'
 import { useCapabilities, useScrollStory } from './hooks/useScrollStory'
 import { prefersReducedMotion } from './hooks/useMediaQuery'
+import { useI18n } from './i18n/provider'
+import { networkNodeCount } from './config/neural'
+import { cx } from './lib/utils'
 import type { Project } from './data/projects'
 import { Hero } from './sections/Hero'
 import { Ideas } from './sections/Ideas'
@@ -56,7 +59,20 @@ export default function App() {
   const spec = useCapabilities()
   const story = useScrollStory()
   const reducedMotion = Boolean(useReducedMotion())
+  const { t, lang } = useI18n()
   const [overlays, dispatch] = useReducer(overlayReducer, OVERLAYS_INITIAL)
+
+  /* brief blur/fade when the language swaps — the CORE canvas lives outside
+     this wrapper, so the 3D scene never flickers at the switch. */
+  const [fading, setFading] = useState(false)
+  const prevLang = useRef(lang)
+  useEffect(() => {
+    if (prevLang.current === lang) return
+    prevLang.current = lang
+    setFading(true)
+    const id = window.setTimeout(() => setFading(false), 300)
+    return () => window.clearTimeout(id)
+  }, [lang])
 
   const openProject = useCallback((project: Project) => {
     dispatch({ type: 'project', value: project })
@@ -69,7 +85,6 @@ export default function App() {
   const setGuide = useCallback((value: boolean) => dispatch({ type: 'guide', value }), [])
 
   useEffect(() => {
-    document.title = `${PROFILE.name.toLowerCase()} — portfolio — software, ai & cybersecurity`
     window.history.replaceState(
       null,
       '',
@@ -103,7 +118,7 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <a className="skip-link" href="#work">
-        Skip to projects
+        {t('app.skip')}
       </a>
 
       <Background />
@@ -115,6 +130,7 @@ export default function App() {
             spec={spec}
             section={coreState}
             velocity={story.velocity}
+            projectId={story.projectId}
             reducedMotion={reducedMotion}
           />
         </Suspense>
@@ -126,7 +142,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="app">
+      <div className={cx('app', fading && 'app-fade')}>
         <Navigation />
 
         <main>
@@ -145,9 +161,11 @@ export default function App() {
       </div>
 
       <span className="keys" aria-hidden="true">
-        <kbd>/</kbd> menu <kbd>?</kbd> guide <kbd>D</kbd> top
+        <kbd>/</kbd> {t('app.keysMenu')} <kbd>?</kbd> {t('app.keysGuide')} <kbd>D</kbd>{' '}
+        {t('app.keysTop')}
       </span>
 
+      <CoreStatus nodes={networkNodeCount(spec)} />
       <ProjectOverlay project={overlays.project} onClose={closeProject} />
       <CommandMenu open={overlays.command} onClose={() => setCommand(false)} />
       <Guide open={overlays.guide} onClose={() => setGuide(false)} />

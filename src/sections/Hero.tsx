@@ -3,16 +3,20 @@ import { ArrowDown } from 'lucide-react'
 import { PROFILE } from '../data/profile'
 import { STATS } from '../data/metrics'
 import { LineReveal, Reveal } from '../components/Primitives'
+import { useI18n } from '../i18n/provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
+  const { t, messages } = useI18n()
+
   return (
-    <section id="top" className="hero" aria-label="Introduction">
+    <section id="top" className="hero" aria-label={t('hero.aria')}>
       <div className="hero-inner">
         <Reveal delay={0.05}>
           <p className="hero-kicker mono">
-            Portfolio — <span>{PROFILE.year}</span> / {PROFILE.location}
+            {t('hero.kickerPrefix')}
+            <span>{PROFILE.year}</span> / {t('app.location')}
           </p>
         </Reveal>
 
@@ -32,7 +36,7 @@ export function Hero() {
         </div>
 
         <div className="hero-headline" aria-hidden="true">
-          {PROFILE.headline.map((line, i) => (
+          {messages.hero.headline.map((line, i) => (
             <LineReveal
               key={line}
               text={line}
@@ -44,7 +48,7 @@ export function Hero() {
       </div>
 
       <div className="hero-hint" aria-hidden="true">
-        drag the core
+        {t('hero.dragHint')}
       </div>
 
       <div className="hero-strip">
@@ -57,18 +61,24 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.9 + i * 0.1, ease: EASE }}
           >
             <div className="v">{stat.value}</div>
-            <div className="l mono">{stat.label}</div>
+            <div className="l mono">
+              {i === 0
+                ? t('hero.statProjects')
+                : i === 1
+                  ? t('hero.statExperiments')
+                  : t('hero.statTechnologies')}
+            </div>
           </motion.div>
         ))}
         <motion.a
           className="hero-go"
           href="#work"
-          data-cursor="GO"
+          data-cursor="go"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 1.2, ease: EASE }}
         >
-          Explore work
+          {t('hero.explore')}
           <span className="arr" aria-hidden="true">
             <ArrowDown size={13} strokeWidth={1.5} />
           </span>

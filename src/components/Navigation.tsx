@@ -1,25 +1,129 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { MENU_ITEMS } from '../data/navigation'
+import { ArrowUpRight, ChevronDown, Globe, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PROFILE } from '../data/profile'
 import { cx } from '../lib/utils'
 import { prefersReducedMotion } from '../hooks/useMediaQuery'
+import { LANGS } from '../i18n'
+import { useLocalizedContent } from '../i18n/content'
+import { useI18n } from '../i18n/provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
-const SOCIALS = [
-  { label: 'GitHub', href: PROFILE.github },
-  { label: 'Telegram', href: PROFILE.telegram },
-  { label: 'LinkedIn', href: PROFILE.linkedin },
-  { label: 'Email', href: `mailto:${PROFILE.email}` },
-]
+function LanguageSwitch() {
+  const { lang, setLang, t } = useI18n()
+  const [open, setOpen] = useState(false)
+  const popRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (event: PointerEvent) => {
+      if (popRef.current && !popRef.current.contains(event.target as Node)) setOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const onMenuKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    event.preventDefault()
+    const items = Array.from(popRef.current?.querySelectorAll<HTMLButtonElement>(
+      '[role="menuitemradio"]',
+    ) ?? [])
+    if (items.length === 0) return
+    const idx = items.indexOf(document.activeElement as HTMLButtonElement)
+    const next = event.key === 'ArrowDown' ? idx + 1 : idx - 1
+    const target = items[(next + items.length) % items.length]
+    target?.focus()
+  }
+
+  const ariaLabel = t('language.aria')
+
+  return (
+    <>
+      <div
+        className="lang-switch lang-switch--inline"
+        data-cursor="language"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {LANGS.map((meta) => (
+          <button
+            key={meta.code}
+            type="button"
+            className={cx(lang === meta.code && 'is-active')}
+            aria-pressed={lang === meta.code}
+            aria-label={meta.full}
+            onClick={() => setLang(meta.code)}
+          >
+            {meta.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="lang-switch lang-switch--pop" ref={popRef} onKeyDown={onMenuKey}>
+        <button
+          type="button"
+          className="lang-trigger"
+          aria-label={ariaLabel}
+          aria-haspopup="true"
+          aria-expanded={open}
+          data-cursor="language"
+          onClick={() => setOpen((value) => !value)}
+        >
+          <Globe size={11} strokeWidth={1.5} aria-hidden="true" />
+          {LANGS.find((meta) => meta.code === lang)?.label}
+          <ChevronDown className="chev" size={10} strokeWidth={1.5} aria-hidden="true" />
+        </button>
+        {open && (
+          <div className="lang-menu" role="menu" aria-label={ariaLabel}>
+            {LANGS.map((meta) => (
+              <button
+                key={meta.code}
+                type="button"
+                role="menuitemradio"
+                aria-checked={lang === meta.code}
+                className={cx(lang === meta.code && 'is-active')}
+                onClick={() => {
+                  setLang(meta.code)
+                  setOpen(false)
+                }}
+              >
+                <span>{meta.full}</span>
+                <span className="mono">{meta.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
 
 export function Navigation() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const { t, messages } = useI18n()
+  const { menuItems } = useLocalizedContent()
+
+  const socials = useMemo(
+    () => [
+      { label: 'GitHub', href: PROFILE.github },
+      { label: 'Telegram', href: PROFILE.telegram },
+      { label: 'LinkedIn', href: PROFILE.linkedin },
+      { label: messages.socials.email, href: `mailto:${PROFILE.email}` },
+    ],
+    [messages.socials.email],
+  )
 
   const close = useCallback(() => setOpen(false), [])
 
@@ -81,17 +185,18 @@ export function Navigation() {
         <button
           type="button"
           className="brand"
-          aria-label="Back to top"
+          aria-label={t('app.backToTop')}
           onClick={() => (open ? close() : goTop())}
         >
           D<i>/</i>P
         </button>
 
         <span className="header-center" aria-hidden="true">
-          Portfolio · A System for Building Ideas
+          {t('app.headerCenter')}
         </span>
 
         <div className="header-actions">
+          <LanguageSwitch />
           <a
             className="header-email line-link"
             href={`mailto:${PROFILE.email}`}
@@ -107,8 +212,8 @@ export function Navigation() {
             aria-controls="site-menu"
             onClick={() => (open ? close() : setOpen(true))}
           >
-            <span className="label-open">{PROFILE.availability[0]}</span>
-            <span className="label-close">Close</span>
+            <span className="label-open">{t('app.statusOpen')}</span>
+            <span className="label-close">{t('app.close')}</span>
             <span className="dot" aria-hidden="true" />
           </button>
         </div>
@@ -122,7 +227,7 @@ export function Navigation() {
             className="menu"
             role="dialog"
             aria-modal="true"
-            aria-label="Site navigation"
+            aria-label={t('app.menuAria')}
             initial={{ clipPath: 'inset(0 0 100% 0)' }}
             animate={{ clipPath: 'inset(0 0 0% 0)' }}
             exit={{ clipPath: 'inset(0 0 100% 0)' }}
@@ -140,14 +245,14 @@ export function Navigation() {
                   goTop()
                 }}
               >
-                Index
+                {t('app.index')}
                 <X size={14} strokeWidth={1.5} aria-hidden="true" />
               </button>
             </div>
 
-            <nav className="menu-body" aria-label="Sections">
+            <nav className="menu-body" aria-label={t('app.sectionsAria')}>
               <ul className="menu-list">
-                {MENU_ITEMS.map((item, i) => (
+                {menuItems.map((item, i) => (
                   <motion.li
                     key={item.target}
                     className="menu-item"
@@ -182,7 +287,7 @@ export function Navigation() {
 
             <div className="menu-foot">
               <div className="menu-socials">
-                {SOCIALS.map((social) => (
+                {socials.map((social) => (
                   <a
                     key={social.label}
                     href={social.href}
@@ -194,7 +299,7 @@ export function Navigation() {
                 ))}
               </div>
               <span className="mono">
-                {PROFILE.location} — {PROFILE.timezone}
+                {t('app.location')} — {PROFILE.timezone}
               </span>
             </div>
           </motion.div>

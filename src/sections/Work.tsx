@@ -2,12 +2,13 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { useRef } from 'react'
 import type { Project } from '../data/projects'
-import { PROJECTS } from '../data/projects'
 import { cx } from '../lib/utils'
 import { SectionLabel, LineReveal, Reveal } from '../components/Primitives'
 import { AntifakeMock } from '../components/visuals/AntifakeMock'
 import { ShieldxMock } from '../components/visuals/ShieldxMock'
 import { YotoqhonamMock } from '../components/visuals/YotoqhonamMock'
+import { useLocalizedContent } from '../i18n/content'
+import { useI18n } from '../i18n/provider'
 
 const VISUALS = {
   yotoqhonam: YotoqhonamMock,
@@ -23,14 +24,19 @@ interface ProjectRowProps {
 
 function ProjectRow({ project, reversed, onOpen }: ProjectRowProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const Visual = VISUALS[project.visual]
+  const Visual = VISUALS[project.visual as keyof typeof VISUALS]
+  const { t } = useI18n()
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const figureY = useTransform(scrollYProgress, [0, 1], [46, -46])
   const figureScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.96, 1, 0.96])
 
   return (
-    <article ref={ref} className={cx('project-row', reversed && 'project-row--rev')}>
+    <article
+      ref={ref}
+      className={cx('project-row', reversed && 'project-row--rev')}
+      data-project={project.id}
+    >
       <span className="project-index" aria-hidden="true">
         {project.index}
       </span>
@@ -49,7 +55,7 @@ function ProjectRow({ project, reversed, onOpen }: ProjectRowProps) {
           <p className="p-sub">{project.subtitle}</p>
         </Reveal>
 
-        <div className="p-tags" aria-label="Tags">
+        <div className="p-tags" aria-label={t('projects.tagsAria')}>
           {project.tags.map((tag) => (
             <span className="p-tag" key={tag}>
               {tag}
@@ -65,11 +71,11 @@ function ProjectRow({ project, reversed, onOpen }: ProjectRowProps) {
           <button
             type="button"
             className="bracket-link"
-            data-cursor="VIEW"
+            data-cursor="view"
             onClick={() => onOpen(project)}
-            aria-label={`Open ${project.title} case study`}
+            aria-label={t('projects.openCaseAria').replace('{title}', project.title)}
           >
-            Open case study
+            {t('projects.openCase')}
           </button>
         </div>
       </div>
@@ -95,11 +101,14 @@ interface WorkProps {
 }
 
 export function Work({ onOpen }: WorkProps) {
-  return (
-    <section id="work" className="section" aria-label="Projects">
-      <SectionLabel index="01" title="Work — Systems" />
+  const { projects } = useLocalizedContent()
+  const { t } = useI18n()
 
-      {PROJECTS.map((project, i) => (
+  return (
+    <section id="work" className="section" aria-label={t('projects.aria')}>
+      <SectionLabel index="01" title={t('projects.sectionTitle')} />
+
+      {projects.map((project, i) => (
         <ProjectRow
           key={project.id}
           project={project}
@@ -111,7 +120,7 @@ export function Work({ onOpen }: WorkProps) {
       <div className="hair" />
       <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
         <a className="mono line-link" href="#experiments" style={{ color: 'var(--fg)' }}>
-          Next: Experiments
+          {t('projects.next')}
           <ArrowUpRight size={12} strokeWidth={1.5} style={{ display: 'inline', verticalAlign: '-1px' }} />
         </a>
       </div>
