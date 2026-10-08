@@ -1,0 +1,559 @@
+/* ============================================================
+   DEV // IDENTITY — project visual mockups (container-scaled)
+   ============================================================ */
+
+.project-media,
+.case-visual,
+.exp-preview__stage {
+  container-type: inline-size;
+}
+
+.mock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1em;
+  padding: clamp(14px, 3.2cqw, 40px);
+  background: linear-gradient(160deg, #0b0b0f 0%, #08080a 70%);
+  font-family: var(--font-mono);
+  font-size: clamp(7px, 1.35cqw, 14px);
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.mock ::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---------- shared mock atoms ---------- */
+
+.mock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding-bottom: 0.9em;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.78em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex: none;
+}
+
+.mock-bar b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.mock-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--success);
+}
+
+.mock-live i {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2.4s var(--ease-io) infinite;
+}
+
+.mock-label {
+  font-size: 0.72em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.mock-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.9em;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.mock-value em {
+  font-style: normal;
+  color: var(--accent);
+  font-size: 0.62em;
+}
+
+/* ---------- 01 · YOTOQHONAM ---------- */
+
+.mock-yoto {
+  gap: 0.9em;
+}
+
+.mock-yoto__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.1em;
+}
+
+.mock-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+}
+
+.mock-rail span {
+  width: 2.4em;
+  height: 2.4em;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  font-size: 0.8em;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+.mock-rail span.is-on {
+  border-color: rgba(77, 124, 255, 0.65);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.mock-yoto__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+  min-width: 0;
+}
+
+.mock-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8em;
+}
+
+.mock-stat {
+  border: 1px solid var(--line);
+  padding: 0.85em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  background: rgba(245, 245, 245, 0.015);
+}
+
+.mock-floor {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--line);
+  padding: 0.9em 1em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+}
+
+.mock-floor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  font-size: 0.72em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mock-floor__head b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.mock-rooms {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.45em;
+  flex: 1;
+  align-content: start;
+}
+
+.mock-room {
+  aspect-ratio: 1;
+  border: 1px solid rgba(245, 245, 245, 0.1);
+  background: rgba(245, 245, 245, 0.025);
+}
+
+.mock-room.is-full {
+  background: rgba(77, 124, 255, 0.62);
+  border-color: rgba(77, 124, 255, 0.8);
+}
+
+.mock-room.is-half {
+  background: rgba(77, 124, 255, 0.22);
+  border-color: rgba(77, 124, 255, 0.42);
+}
+
+.mock-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4em;
+  font-size: 0.7em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.mock-legend i {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.55em;
+  vertical-align: -0.05em;
+  background: rgba(77, 124, 255, 0.62);
+}
+
+.mock-legend span:nth-child(2) i {
+  background: rgba(77, 124, 255, 0.22);
+}
+
+.mock-legend span:nth-child(3) i {
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(245, 245, 245, 0.16);
+}
+
+.mock-table {
+  border-top: 1px solid var(--line);
+  padding-top: 0.8em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+}
+
+.mock-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 1.2em;
+  align-items: baseline;
+  font-size: 0.75em;
+  letter-spacing: 0.08em;
+}
+
+.mock-row b {
+  color: var(--fg);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mock-row i {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* ---------- 02 · ANTIFAKE ---------- */
+
+.mock-af {
+  justify-content: space-between;
+}
+
+.mock-af__flow {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex: 1;
+  min-height: 0;
+}
+
+.af-node {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  border: 1px solid var(--line);
+  background: rgba(245, 245, 245, 0.015);
+  padding: 0.9em 0.7em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  text-align: center;
+}
+
+.af-node.is-key {
+  border-color: rgba(77, 124, 255, 0.55);
+  background: rgba(77, 124, 255, 0.07);
+}
+
+.af-node__thumb {
+  width: 68%;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+  background: #0d0d11;
+}
+
+.af-node__label {
+  font-size: 0.68em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.af-node.is-key .af-node__label {
+  color: var(--accent-2);
+}
+
+.af-arrow {
+  flex: none;
+  width: 2.4em;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(245, 245, 245, 0.2), var(--accent));
+  position: relative;
+}
+
+.af-arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -0.32em;
+  border-left: 0.5em solid var(--accent);
+  border-top: 0.35em solid transparent;
+  border-bottom: 0.35em solid transparent;
+}
+
+.mock-af__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding-top: 0.85em;
+  border-top: 1px solid var(--line);
+  font-size: 0.72em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.mock-af__foot b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.af-badge {
+  color: var(--success);
+  border: 1px solid rgba(125, 219, 168, 0.4);
+  padding: 0.35em 0.7em;
+  white-space: nowrap;
+}
+
+/* ---------- 03 · SHIELDX ---------- */
+
+.mock-sx {
+  gap: 0.9em;
+}
+
+.mock-sx__top {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8em;
+  flex: none;
+}
+
+.sx-card {
+  border: 1px solid var(--line);
+  padding: 0.85em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  background: rgba(245, 245, 245, 0.015);
+}
+
+.sx-card__k {
+  font-size: 0.7em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.sx-card__v {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.7em;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.sx-card__v.ok {
+  color: var(--success);
+}
+
+.sx-spark {
+  height: 3.4em;
+  width: 100%;
+  overflow: visible;
+}
+
+.sx-spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.sx-spark .base {
+  stroke: rgba(245, 245, 245, 0.12);
+}
+
+.mock-sx__feed {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sx-feed__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.7em 1em;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.7em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex: none;
+}
+
+.sx-feed__head b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.sx-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1em;
+  align-items: center;
+  padding: 0.62em 1em;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.74em;
+  letter-spacing: 0.06em;
+  flex: none;
+}
+
+.sx-row:last-child {
+  border-bottom: 0;
+}
+
+.sx-row {
+  animation: sx-flash 7s ease-in-out infinite;
+}
+
+.sx-row:nth-child(3) {
+  animation-delay: 1.4s;
+}
+
+.sx-row:nth-child(4) {
+  animation-delay: 2.8s;
+}
+
+.sx-row:nth-child(5) {
+  animation-delay: 4.2s;
+}
+
+.sx-row:nth-child(6) {
+  animation-delay: 5.6s;
+}
+
+@keyframes sx-flash {
+  0%,
+  90%,
+  100% {
+    background-color: transparent;
+  }
+  94% {
+    background-color: rgba(77, 124, 255, 0.09);
+  }
+}
+
+.sx-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.sx-dot.warn {
+  background: #ffb454;
+}
+
+.sx-dot.ok {
+  background: var(--success);
+}
+
+.sx-row b {
+  color: var(--fg);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sx-row span:last-child {
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.mock-sx__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em 1.6em;
+  justify-content: space-between;
+  font-size: 0.7em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex: none;
+}
+
+.mock-sx__foot b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+/* ---------- experiment preview stage ---------- */
+
+.exp-viz {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 45%, #0e0f14, #08080a 75%);
+}
+
+.exp-viz svg {
+  width: 100%;
+  height: 100%;
+}
+
+.exp-scan {
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+  animation: exp-rot 6s linear infinite;
+}
+
+@keyframes exp-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
